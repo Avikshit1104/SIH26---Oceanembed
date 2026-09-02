@@ -1,6 +1,6 @@
 import { useRef, useState, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Html, Text, Line } from '@react-three/drei';
+import { OrbitControls, Stars, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { Thermometer, Layers, Info, MapPin } from 'lucide-react';
 import PageLayout from '../components/PageLayout';

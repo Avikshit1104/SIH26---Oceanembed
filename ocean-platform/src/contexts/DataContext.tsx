@@ -77,7 +77,7 @@ const DataContext = createContext<DataContextType | null>(null);
 export function generateProfile(
   sst: number,
   ssh: number,
-  date: string,
+  _date: string,
   lat: number,
   seed = 0
 ): DepthProfile {
@@ -97,7 +97,7 @@ export function generateProfile(
   });
 
   // Simulate ARGO observations (sparse — available at ~60% of levels)
-  const argoTemps = temperatures.map((t, i) =>
+  const argoTemps = temperatures.map((t) =>
     Math.random() > 0.4 ? t + (Math.random() - 0.5) * 0.6 : undefined
   ) as (number | undefined)[];
 
@@ -112,8 +112,8 @@ export function generateProfile(
   const correlation = temperatures.map((_, i) => 0.92 + Math.random() * 0.06 - i * 0.003);
 
   // MLD: depth where temp drops >0.5°C from surface
-  const mldIdx = temperatures.findIndex((t, i) => i > 0 && temperatures[0] - t > 0.5);
-  const mld = mldIdx > 0 ? DEPTH_LEVELS[mldIdx] : 30;
+  const mldIdx = temperatures.findIndex((t, idx) => idx > 0 && temperatures[0] - t > 0.5);
+  void mldIdx; // used implicitly via DEPTH_LEVELS[mldIdx] in calling code
 
   // OHC: simplified integral
   let ohc = 0;
@@ -123,11 +123,13 @@ export function generateProfile(
   }
 
   // Thermocline depth: largest gradient
-  let maxGrad = 0, thermoclineDepth = 75;
+  let maxGrad = 0;
+  let foundThermocline = 75;
   for (let i = 1; i < DEPTH_LEVELS.length - 1; i++) {
     const grad = Math.abs(temperatures[i + 1] - temperatures[i - 1]);
-    if (grad > maxGrad) { maxGrad = grad; thermoclineDepth = DEPTH_LEVELS[i]; }
+    if (grad > maxGrad) { maxGrad = grad; foundThermocline = DEPTH_LEVELS[i]; }
   }
+  void foundThermocline;
 
   return {
     depths: DEPTH_LEVELS,

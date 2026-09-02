@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Thermometer, Droplets, Waves, Wind,
-  Filter, MapPin, Info, Eye, Layers,
+  MapPin, Info, Eye, Layers,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';

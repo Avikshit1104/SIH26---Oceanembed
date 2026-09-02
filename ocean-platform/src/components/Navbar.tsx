@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { to: '/input',     label: 'Input Data',   icon: BarChart2 },
   { to: '/surface',   label: 'Surface Obs',  icon: Thermometer },
   { to: '/map',       label: '3D Profile',   icon: Globe },
-  { to: '/cyclone',   label: 'Reconstruct',  icon: Wind },
+  { to: '/cyclone',   label: 'Cyclone',      icon: Wind },
   { to: '/validation',label: 'Validation',   icon: CheckSquare },
   { to: '/docs',      label: 'Docs',         icon: FileText, requiresAuth: true },
   { to: '/gov',       label: 'Gov Portal',   icon: Shield,   requiresGov: true },

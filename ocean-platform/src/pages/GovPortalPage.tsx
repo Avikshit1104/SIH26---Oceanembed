@@ -75,8 +75,14 @@ export default function GovPortalPage() {
     setTimeout(() => { setSent(false); setActiveTab('alerts'); }, 2000);
   }, [message, selRecipients, severity, trigger, addAlert]);
 
-  // Auto-alert: check if latest record warrants one
-  const autoAlertNeeded = latest && latest.cycloneRiskScore >= 55 && latest.alerts.length > 0;
+  // Auto-alert: check if latest record warrants one (derived from OHC + thermocline)
+  const derivedRiskScore = latest
+    ? Math.min(95, (latest.ohc > 80 ? 30 : latest.ohc > 60 ? 18 : 8)
+        + (latest.thermoclineDepth > 80 ? 20 : latest.thermoclineDepth > 60 ? 10 : 3)
+        + (latest.mld > 40 ? 10 : 5)
+        + (latest.inputs.sst > 29 ? 20 : latest.inputs.sst > 27 ? 10 : 5))
+    : 0;
+  const autoAlertNeeded = latest && derivedRiskScore >= 55;
 
   const activeCount      = alerts.filter(a => !a.acknowledged).length;
   const criticalCount    = alerts.filter(a => a.severity === 'Critical' && !a.acknowledged).length;
@@ -105,7 +111,8 @@ export default function GovPortalPage() {
               <div className="flex-1">
                 <p className="font-semibold text-red-300">Automatic Alert Triggered</p>
                 <p className="text-sm text-red-300/70 mt-1">
-                  Cyclone risk score {latest.cycloneRiskScore}/100 ({latest.cycloneRisk}) detected over {latest.location}.
+                  Elevated ocean conditions detected over {latest?.location ?? '—'}.
+                  OHC: {latest?.ohc?.toFixed(0) ?? '—'} kJ/cm² · SST: {latest?.inputs.sst?.toFixed(1) ?? '—'}°C · Derived risk score: {derivedRiskScore}/100.
                   Automatic notifications dispatched to NDMA, IMD, and coastal authorities.
                 </p>
               </div>

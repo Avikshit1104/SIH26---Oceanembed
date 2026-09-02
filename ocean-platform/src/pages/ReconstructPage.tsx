@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Activity, Target, Clock, TrendingUp,
+  Activity, Clock, TrendingUp,
   ChevronRight, Database, RefreshCw, Shield,
   Calendar, Layers, Cpu, GitBranch, BarChart2,
 } from 'lucide-react';

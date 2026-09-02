@@ -10,7 +10,6 @@ import {
 import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
 import { useData } from '../contexts/DataContext';
-import RiskBadge from '../components/RiskBadge';
 
 // Colour helpers (same palette as SurfacePage)
 function sstColor(t: number): string {
@@ -92,10 +91,11 @@ export default function ValidationPage() {
   // Generate predicted and actual heatmaps
   const { predicted, actual, diff } = useMemo(() => {
     const seedRecord = records[dateIdx];
-    const baseSst  = seedRecord?.seaSurfaceTemp ?? 28;
-    const baseRisk = (seedRecord?.cycloneRiskScore ?? 45) / 100 * 12 + 20; // map to ~20–32°C range
-
-    const base = mode === 'sst' ? baseSst : baseRisk;
+    // Use new DataContext fields
+    const baseSst  = seedRecord?.inputs.sst ?? 28;
+    const baseOhc  = seedRecord?.ohc ?? 55;
+    // mode='sst' → SST field; mode='risk' → OHC-proxy field
+    const base  = mode === 'sst' ? baseSst : (baseOhc / 100) * 12 + 20;
     const noise = mode === 'sst' ? 1.5 : 2.0;
 
     const pred: number[][] = Array.from({ length: ROWS }, (_, ri) =>
@@ -132,15 +132,15 @@ export default function ValidationPage() {
   // Scatter data for predicted vs actual
   const scatterData = predFlat.slice(0, 80).map((p, i) => ({ pred: p, actual: actFlat[i] }));
 
-  // Timeline comparison (last 7 records)
+  // Timeline comparison (last 7 records) — uses inputs.sst
   const timelineData = records.slice(-7).map(r => {
-    const predicted = r.seaSurfaceTemp;
+    const predicted = r.inputs.sst;
     const actual    = simulateActual(predicted, 1.0);
     return {
-      date: format(parseISO(r.date), 'MMM d'),
+      date:      format(parseISO(r.date), 'MMM d'),
       Predicted: predicted,
-      Actual: actual,
-      Error: Math.abs(actual - predicted),
+      Actual:    actual,
+      Error:     Math.abs(actual - predicted),
     };
   });
 
@@ -338,31 +338,30 @@ export default function ValidationPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-white/10">
-                  {['Date', 'Location', 'Pred SST', 'Obs SST', 'Error', 'Pred Risk', 'Actual Risk', 'Pass?'].map(h => (
+                  {['Date', 'Location', 'Pred SST', 'ARGO SST', 'Error', 'OHC', 'MLD', 'Thermocline', 'Pass?'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-white/40 font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {records.map(r => {
-                  const obsSst  = simulateActual(r.seaSurfaceTemp, 0.9);
-                  const err     = obsSst - r.seaSurfaceTemp;
+                  const predSst = r.inputs.sst;
+                  const obsSst  = simulateActual(predSst, 0.9);
+                  const err     = obsSst - predSst;
                   const pass    = Math.abs(err) < 1.5;
-                  const obsRisk = simulateActual(r.cycloneRiskScore, 8);
-                  const obsRiskLabel: 'Low' | 'Moderate' | 'High' | 'Severe' =
-                    obsRisk >= 75 ? 'Severe' : obsRisk >= 55 ? 'High' : obsRisk >= 30 ? 'Moderate' : 'Low';
 
                   return (
                     <tr key={r.id} className="border-b border-white/5 hover:bg-white/3 transition-all">
                       <td className="px-4 py-3 text-white/70 whitespace-nowrap">{format(parseISO(r.date), 'MMM d, yyyy')}</td>
-                      <td className="px-4 py-3 text-white/60">{r.location}</td>
-                      <td className="px-4 py-3 text-cyan-400">{r.seaSurfaceTemp.toFixed(1)}°C</td>
-                      <td className="px-4 py-3 text-green-400">{obsSst.toFixed(1)}°C</td>
+                      <td className="px-4 py-3 text-white/60 max-w-[120px] truncate">{r.location}</td>
+                      <td className="px-4 py-3 text-cyan-400 font-mono">{predSst.toFixed(2)}°C</td>
+                      <td className="px-4 py-3 text-green-400 font-mono">{obsSst.toFixed(2)}°C</td>
                       <td className={`px-4 py-3 font-mono ${pass ? 'text-green-400' : 'text-red-400'}`}>
                         {err > 0 ? '+' : ''}{err.toFixed(2)}°C
                       </td>
-                      <td className="px-4 py-3"><RiskBadge risk={r.cycloneRisk} size="sm" /></td>
-                      <td className="px-4 py-3"><RiskBadge risk={obsRiskLabel} size="sm" /></td>
+                      <td className="px-4 py-3 text-orange-400 font-mono">{r.ohc.toFixed(0)} kJ/cm²</td>
+                      <td className="px-4 py-3 text-purple-400 font-mono">{r.mld.toFixed(0)} m</td>
+                      <td className="px-4 py-3 text-teal-400 font-mono">{r.thermoclineDepth.toFixed(0)} m</td>
                       <td className="px-4 py-3">
                         {pass
                           ? <CheckCircle size={14} className="text-green-400" />

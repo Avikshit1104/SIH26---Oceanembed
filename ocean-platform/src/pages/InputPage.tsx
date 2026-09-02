@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart,
+  Tooltip, ResponsiveContainer, Area, AreaChart,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
