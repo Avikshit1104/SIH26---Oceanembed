@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Waves, MessageSquare, LayoutDashboard, Globe, Wind,
   Thermometer, FileText, Shield, BarChart2, LogOut,
-  Menu, X, ChevronDown, User, CheckSquare,
+  Menu, X, ChevronDown, User, CheckSquare, Map,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard',    icon: LayoutDashboard },
   { to: '/input',     label: 'Input Data',   icon: BarChart2 },
+  { to: '/worldmap',  label: 'Map',          icon: Map },
   { to: '/surface',   label: 'Surface Obs',  icon: Thermometer },
   { to: '/map',       label: '3D Profile',   icon: Globe },
   { to: '/cyclone',   label: 'Cyclone',      icon: Wind },

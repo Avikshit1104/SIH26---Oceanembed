@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 // Lazy loaded pages
 const ChatPage        = lazy(() => import('./pages/ChatPage'));
 const InputPage       = lazy(() => import('./pages/InputPage'));
+const WorldMapPage    = lazy(() => import('./pages/WorldMapPage'));
 const DashboardPage   = lazy(() => import('./pages/DashboardPage'));
 const MapPage         = lazy(() => import('./pages/MapPage'));
 const CyclonePage     = lazy(() => import('./pages/CyclonePage'));
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/login"    element={<LoginPage />} />
               <Route path="/chat"     element={<ChatPage />} />
               <Route path="/input"    element={<InputPage />} />
+              <Route path="/worldmap" element={<WorldMapPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/map"      element={<MapPage />} />
               <Route path="/cyclone"  element={<CyclonePage />} />

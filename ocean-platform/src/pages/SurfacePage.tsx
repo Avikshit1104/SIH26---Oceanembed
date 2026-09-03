@@ -4,6 +4,7 @@ import {
   MapPin, Info, Eye, Layers,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
 import { useData, DOMAIN } from '../contexts/DataContext';
 
@@ -77,6 +78,16 @@ interface HoverInfo { lat: number; lon: number; val: number; x: number; y: numbe
 
 export default function SurfacePage() {
   const { records } = useData();
+  const [searchParams] = useSearchParams();
+
+  // Read lat/lon from URL params (set by WorldMapPage redirect)
+  const paramLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
+  const paramLon = searchParams.get('lon') ? parseFloat(searchParams.get('lon')!) : null;
+  const hasParamPin = paramLat !== null && paramLon !== null;
+
+  // Pin position in grid % coords
+  const pinGridX = hasParamPin ? ((paramLon! - LON_MIN) / (LON_MAX - LON_MIN)) * 100 : null;
+  const pinGridY = hasParamPin ? ((LAT_MAX - paramLat!) / (LAT_MAX - LAT_MIN)) * 100 : null;
 
   const [mode, setMode]       = useState<VarMode>('sst');
   const [region, setRegion]   = useState('All Regions');
@@ -125,6 +136,25 @@ export default function SurfacePage() {
           subtitle="Satellite surface variables at 0.25° · North Indian Ocean (5°N–30°N, 45°E–105°E)"
           icon={<Eye size={16} className="text-cyan-400" />}
         />
+
+        {/* Banner shown when redirected from World Map page */}
+        {hasParamPin && (
+          <div className="flex items-center justify-between gap-4 mb-6 p-4 rounded-2xl glass border border-red-500/30 bg-red-500/8 fade-in-up">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center shrink-0">
+                <MapPin size={16} className="text-red-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Showing observations near {paramLat!.toFixed(2)}°N, {paramLon!.toFixed(2)}°E
+                </p>
+                <p className="text-xs text-white/40 mt-0.5">
+                  Redirected from World Map · Grid interpolation shown · Pin visible on heatmap
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Domain badge */}
         <div className="flex flex-wrap gap-2 mb-6">
@@ -231,6 +261,26 @@ export default function SurfacePage() {
                     <p className="font-bold" style={{ color: valueToColor(hover.val, cfg.min, cfg.max, cfg.gradStart, cfg.gradEnd) }}>
                       {cfg.label}: <span className="text-white">{hover.val.toFixed(2)} {cfg.unit}</span>
                     </p>
+                  </div>
+                )}
+
+                {/* Map redirect pin — shown when navigated from WorldMapPage */}
+                {hasParamPin && pinGridX !== null && pinGridY !== null
+                  && pinGridX >= 0 && pinGridX <= 100
+                  && pinGridY >= 0 && pinGridY <= 100 && (
+                  <div
+                    className="absolute z-30 pointer-events-none"
+                    style={{ left: `${pinGridX}%`, top: `${pinGridY}%`, transform: 'translate(-50%, -100%)' }}
+                  >
+                    {/* Pin drop */}
+                    <div className="flex flex-col items-center">
+                      <div className="glass rounded-lg px-2 py-1 border border-red-500/50 bg-red-500/20 text-[10px] text-red-300 whitespace-nowrap mb-1 shadow-lg">
+                        {paramLat!.toFixed(2)}°N, {paramLon!.toFixed(2)}°E
+                      </div>
+                      <div className="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-lg"
+                        style={{ boxShadow: '0 0 8px rgba(239,68,68,0.8)' }} />
+                      <div className="w-0.5 h-3 bg-red-400/70" />
+                    </div>
                   </div>
                 )}
               </div>
