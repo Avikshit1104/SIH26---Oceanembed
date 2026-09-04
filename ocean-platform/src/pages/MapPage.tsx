@@ -45,22 +45,24 @@ function buildSlabTexture(temp: number, cols = 20, rows = 15): THREE.CanvasTextu
   canvas.width  = cols * 10;
   canvas.height = rows * 10;
   const ctx = canvas.getContext('2d')!;
+  // Fully opaque vivid fill — no globalAlpha dimming
+  ctx.globalAlpha = 1.0;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const noise = Math.sin(r * 0.8 + c * 0.6) * 1.8 + Math.cos(r * 0.5 - c * 0.9) * 1.2;
       const t = THREE.MathUtils.clamp(temp + noise, 2, 30);
       const hex = tempToHex(t);
       ctx.fillStyle = hex;
-      ctx.globalAlpha = 0.88;
       ctx.fillRect(c * 10, r * 10, 10, 10);
     }
   }
-  // grid overlay
-  ctx.globalAlpha = 0.15;
-  ctx.strokeStyle = '#ffffff';
+  // Subtle grid overlay
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = '#000000';
   ctx.lineWidth = 0.5;
   for (let c = 0; c <= cols; c++) { ctx.beginPath(); ctx.moveTo(c * 10, 0); ctx.lineTo(c * 10, canvas.height); ctx.stroke(); }
   for (let r = 0; r <= rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * 10); ctx.lineTo(canvas.width, r * 10); ctx.stroke(); }
+  ctx.globalAlpha = 1.0;
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
   return tex;
@@ -84,7 +86,14 @@ function DepthSlab({
   const topTex  = useMemo(() => buildSlabTexture(temp), [temp]);
 
   const topMat  = useMemo(() => new THREE.MeshStandardMaterial({
-    map: topTex, roughness: 0.25, metalness: 0.12, transparent: true, opacity: 0.93,
+    map: topTex,
+    roughness: 0.1,
+    metalness: 0.0,
+    transparent: false,
+    opacity: 1.0,
+    // Boost brightness so colour shows through scene lighting
+    emissiveMap: topTex,
+    emissive: new THREE.Color(0.3, 0.3, 0.3),
   }), [topTex]);
 
   const sideMat = useMemo(() => new THREE.MeshStandardMaterial({
@@ -125,19 +134,37 @@ function DepthSlab({
         </mesh>
       )}
 
-      {/* Right-side label */}
-      <Html
-        position={[SLAB_W / 2 + 0.12, yCenter, 0]}
-        style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
-      >
-        <div className={`transition-all duration-200 ${isHovered ? 'opacity-100 scale-110' : 'opacity-60'}`}>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: hexColor, boxShadow: `0 0 5px ${hexColor}` }} />
-            <span className="text-white font-bold text-xs">{depth} m</span>
+      {/* Right-side label — only render for every 3rd level to avoid overlap */}
+      {depthIdx % 3 === 0 && (
+        <Html
+          position={[SLAB_W / 2 + 0.30, yCenter, 0]}
+          style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
+        >
+          <div className={`transition-all duration-200 ${isHovered ? 'opacity-100 scale-105' : 'opacity-75'}`}
+            style={{ background: 'rgba(2,9,23,0.7)', borderRadius: '6px', padding: '2px 6px', border: `1px solid ${hexColor}55` }}>
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: hexColor, boxShadow: `0 0 4px ${hexColor}` }} />
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '11px' }}>{depth}m</span>
+            </div>
+            <span style={{ color: hexColor, fontSize: '10px', fontFamily: 'monospace', marginLeft: '10px' }}>{temp.toFixed(1)}°C</span>
           </div>
-          <span className="text-xs font-mono ml-3" style={{ color: hexColor }}>{temp.toFixed(1)}°C</span>
-        </div>
-      </Html>
+        </Html>
+      )}
+      {/* For hovered slab: always show label regardless of index */}
+      {isHovered && depthIdx % 3 !== 0 && (
+        <Html
+          position={[SLAB_W / 2 + 0.30, yCenter, 0]}
+          style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
+        >
+          <div style={{ background: 'rgba(2,9,23,0.85)', borderRadius: '6px', padding: '3px 8px', border: `1px solid ${hexColor}80` }}>
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: hexColor, boxShadow: `0 0 6px ${hexColor}` }} />
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '11px' }}>{depth}m</span>
+            </div>
+            <span style={{ color: hexColor, fontSize: '10px', fontFamily: 'monospace', marginLeft: '10px' }}>{temp.toFixed(1)}°C</span>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -238,36 +265,37 @@ function Particles() {
 
 // ── Axis ruler on the left ────────────────────────────────────────────────────
 function DepthRuler() {
-  const x = -SLAB_W / 2 - 0.3;
+  const x    = -SLAB_W / 2 - 0.55;  // pushed further left
   const yTop = depthToY(0);
   const yBot = depthToY(1000);
 
   return (
     <group>
-      {/* Vertical bar */}
       <Line
         points={[new THREE.Vector3(x, yTop + 0.1, 0), new THREE.Vector3(x, yBot - 0.1, 0)]}
-        color="#ffffff" transparent opacity={0.25} lineWidth={1}
+        color="#ffffff" transparent opacity={0.20} lineWidth={1}
       />
-      {/* Tick marks at selected levels */}
-      {[0, 50, 100, 200, 500, 1000].map(d => {
+      {[0, 100, 200, 300, 500, 700, 1000].map(d => {
         const y = depthToY(d);
         return (
           <group key={d}>
             <Line
-              points={[new THREE.Vector3(x - 0.06, y, 0), new THREE.Vector3(x + 0.06, y, 0)]}
-              color="#ffffff" transparent opacity={0.3} lineWidth={1}
+              points={[new THREE.Vector3(x - 0.08, y, 0), new THREE.Vector3(x + 0.06, y, 0)]}
+              color="#ffffff" transparent opacity={0.25} lineWidth={1}
             />
-            <Html position={[x - 0.08, y, 0]} style={{ pointerEvents: 'none', whiteSpace: 'nowrap', transform: 'translateX(-100%)' }}>
-              <span className="text-[10px] text-white/40 font-mono">{d}m</span>
+            <Html
+              position={[x - 0.12, y, 0]}
+              style={{ pointerEvents: 'none', whiteSpace: 'nowrap', transform: 'translate(-100%, -50%)' }}
+            >
+              <span style={{
+                fontSize: '10px', color: 'rgba(255,255,255,0.5)',
+                fontFamily: 'monospace', fontWeight: 600,
+                background: 'rgba(2,9,23,0.6)', padding: '1px 4px', borderRadius: '3px',
+              }}>{d}m</span>
             </Html>
           </group>
         );
       })}
-      {/* Label */}
-      <Html position={[x, (yTop + yBot) / 2, 0]} style={{ pointerEvents: 'none', whiteSpace: 'nowrap', transform: 'translate(-100%, -50%)' }}>
-        <span className="text-[10px] text-white/30 rotate-90 inline-block">Depth</span>
-      </Html>
     </group>
   );
 }
@@ -279,10 +307,11 @@ function ProfileScene({ temperatures }: { temperatures: number[] }) {
   return (
     <>
       <Stars radius={80} depth={40} count={1500} factor={3} saturation={0} fade />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[6, 8, 5]} intensity={1.8} castShadow />
-      <directionalLight position={[-4, -3, -3]} intensity={0.5} color="#1e40af" />
-      <pointLight position={[0, 2.5, 0]} intensity={1.2} color="#06b6d4" distance={8} />
+      <ambientLight intensity={1.2} />
+      <directionalLight position={[6, 8, 5]} intensity={2.5} castShadow />
+      <directionalLight position={[0, 5, 8]} intensity={1.5} color="#ffffff" />
+      <directionalLight position={[-4, -3, -3]} intensity={0.6} color="#1e40af" />
+      <pointLight position={[0, 2.5, 0]} intensity={1.5} color="#06b6d4" distance={8} />
       <pointLight position={[0, -2.5, 0]} intensity={0.8} color="#3730a3" distance={6} />
 
       {DEPTH_LEVELS.map((_, i) => (

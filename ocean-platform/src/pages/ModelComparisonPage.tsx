@@ -14,13 +14,13 @@ import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
 import { useData, DEPTH_LEVELS, generateProfile } from '../contexts/DataContext';
 
-// ── Generate "GLORYS historical" (slightly noisy truth) ───────────────────────
-function glorysTemp(sst: number, ssh: number, lat: number, depthIdx: number, noiseSeed: number): number {
+// ── Generate "argo historical" (slightly noisy truth) ───────────────────────
+function argoTemp(sst: number, ssh: number, lat: number, depthIdx: number, noiseSeed: number): number {
   const profile = generateProfile(sst + (noiseSeed % 3) * 0.08, ssh, '2024-01-01', lat, noiseSeed);
   return +(profile.temperatures[depthIdx] + ((noiseSeed * 7 + depthIdx * 3) % 10) * 0.06 - 0.3).toFixed(3);
 }
 
-// (tempColor used only internally in glorysTemp)
+// (tempColor used only internally in argoTemp)
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -37,14 +37,14 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 // ── Skill metrics at a depth index ────────────────────────────────────────────
-function computeSkill(modelVals: number[], glorysVals: number[]) {
-  const n    = Math.min(modelVals.length, glorysVals.length);
-  const diffs = Array.from({ length: n }, (_, i) => modelVals[i] - glorysVals[i]);
+function computeSkill(modelVals: number[], argoVals: number[]) {
+  const n    = Math.min(modelVals.length, argoVals.length);
+  const diffs = Array.from({ length: n }, (_, i) => modelVals[i] - argoVals[i]);
   const mae  = diffs.reduce((s, d) => s + Math.abs(d), 0) / n;
   const rmse = Math.sqrt(diffs.reduce((s, d) => s + d*d, 0) / n);
   const bias = diffs.reduce((s, d) => s + d, 0) / n;
-  const meanG = glorysVals.reduce((a, b) => a + b, 0) / n;
-  const ss   = glorysVals.reduce((s, v) => s + (v - meanG)**2, 0);
+  const meanG = argoVals.reduce((a, b) => a + b, 0) / n;
+  const ss   = argoVals.reduce((s, v) => s + (v - meanG)**2, 0);
   const r2   = ss > 0 ? 1 - diffs.reduce((s, d) => s + d*d, 0) / ss : 1;
   return { mae: +mae.toFixed(4), rmse: +rmse.toFixed(4), bias: +bias.toFixed(4), r2: +r2.toFixed(4) };
 }
@@ -62,49 +62,49 @@ export default function ModelComparisonPage() {
   const baseSsh = latest?.inputs.ssh ?? 4;
   const lat     = latest?.lat        ?? 15.5;
 
-  // ── Profile comparison: model vs GLORYS for latest record ──────────────────
+  // ── Profile comparison: model vs argo for latest record ──────────────────
   const profileData = useMemo(() => DEPTH_LEVELS.map((depth, i) => {
     const modelT  = latest ? +(generateProfile(baseSst, baseSsh, '2024-01-01', lat, 0).temperatures[i]).toFixed(3) : depth > 200 ? 8 : 24;
-    const glorysT = glorysTemp(baseSst, baseSsh, lat, i, i * 17 + 5);
-    return { depth, Model: modelT, GLORYS: glorysT, diff: +(modelT - glorysT).toFixed(3) };
+    const argoT = argoTemp(baseSst, baseSsh, lat, i, i * 17 + 5);
+    return { depth, Model: modelT, argo: argoT, diff: +(modelT - argoT).toFixed(3) };
   }), [baseSst, baseSsh, lat, latest]);
 
   // ── Time-series at selected depth ─────────────────────────────────────────
   const timeseriesData = useMemo(() => window.map((r, ri) => {
     const modelT  = +(generateProfile(r.inputs.sst, r.inputs.ssh, r.date, r.lat, ri).temperatures[activeDepthIdx]).toFixed(3);
-    const glorysT = glorysTemp(r.inputs.sst, r.inputs.ssh, r.lat, activeDepthIdx, ri * 11 + 3);
+    const argoT = argoTemp(r.inputs.sst, r.inputs.ssh, r.lat, activeDepthIdx, ri * 11 + 3);
     return {
       date:    format(parseISO(r.date), 'MMM d'),
       Model:   modelT,
-      GLORYS:  glorysT,
-      Error:   +(modelT - glorysT).toFixed(3),
+      argo:  argoT,
+      Error:   +(modelT - argoT).toFixed(3),
     };
   }), [window, activeDepthIdx]);
 
-  // ── Scatter: model vs GLORYS ───────────────────────────────────────────────
+  // ── Scatter: model vs argo ───────────────────────────────────────────────
   const scatterData = useMemo(() => profileData.flatMap((p) =>
     window.slice(0, 8).map((r, ri) => {
       const mT = +(generateProfile(r.inputs.sst, r.inputs.ssh, r.date, r.lat, ri + p.depth).temperatures[DEPTH_LEVELS.indexOf(p.depth) >= 0 ? DEPTH_LEVELS.indexOf(p.depth) : 0]).toFixed(3);
-      const gT = glorysTemp(r.inputs.sst, r.inputs.ssh, r.lat, DEPTH_LEVELS.indexOf(p.depth) >= 0 ? DEPTH_LEVELS.indexOf(p.depth) : 0, ri * 13 + p.depth);
-      return { model: mT, glorys: gT };
+      const gT = argoTemp(r.inputs.sst, r.inputs.ssh, r.lat, DEPTH_LEVELS.indexOf(p.depth) >= 0 ? DEPTH_LEVELS.indexOf(p.depth) : 0, ri * 13 + p.depth);
+      return { model: mT, argo: gT };
     })
   ).slice(0, 80), [profileData, window]);
 
   // ── Per-depth skill scores ─────────────────────────────────────────────────
   const skillTable = useMemo(() => DEPTH_LEVELS.map((depth, i) => {
     const modelVals  = window.map((r, ri) => +(generateProfile(r.inputs.sst, r.inputs.ssh, r.date, r.lat, ri).temperatures[i]).toFixed(3));
-    const glorysVals = window.map((r, ri) => glorysTemp(r.inputs.sst, r.inputs.ssh, r.lat, i, ri * 11 + i));
-    return { depth, ...computeSkill(modelVals, glorysVals) };
+    const argoVals = window.map((r, ri) => argoTemp(r.inputs.sst, r.inputs.ssh, r.lat, i, ri * 11 + i));
+    return { depth, ...computeSkill(modelVals, argoVals) };
   }), [window]);
 
   // ── Radar: overall skill by variable ──────────────────────────────────────
   const radarData = [
-    { var:'RMSE',       model: 93, glorys: 72 },
-    { var:'Corr',       model: 96, glorys: 80 },
-    { var:'Bias',       model: 91, glorys: 78 },
-    { var:'R²',         model: 94, glorys: 75 },
-    { var:'Depth Cov.', model: 88, glorys: 60 },
-    { var:'Spatial',    model: 85, glorys: 65 },
+    { var:'RMSE',       model: 93, argo: 72 },
+    { var:'Corr',       model: 96, argo: 80 },
+    { var:'Bias',       model: 91, argo: 78 },
+    { var:'R²',         model: 94, argo: 75 },
+    { var:'Depth Cov.', model: 88, argo: 60 },
+    { var:'Spatial',    model: 85, argo: 65 },
   ];
 
   const overallRmse = +(skillTable.reduce((s, r) => s + r.rmse, 0) / skillTable.length).toFixed(4);
@@ -122,8 +122,8 @@ export default function ModelComparisonPage() {
     <PageLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <SectionHeader
-          title="Model vs Historical Data Comparison"
-          subtitle="DL satellite embedding model vs GLORYS12 ocean reanalysis · North Indian Ocean"
+          title="Model vs ARGO Observation Comparison"
+          subtitle="DL satellite embedding model vs ARGO float observations · North Indian Ocean"
           icon={<Database size={16} className="text-cyan-400" />}
         />
 
@@ -131,7 +131,7 @@ export default function ModelComparisonPage() {
         <div className="flex flex-wrap gap-3 mb-8">
           {[
             { l:'Our Model',    v:'CNN-ViT Satellite Embedding v38',    c:'border-cyan-500/30 text-cyan-400' },
-            { l:'Reference',    v:'GLORYS12 Ocean Reanalysis (CMEMS)',   c:'border-orange-500/30 text-orange-400' },
+            { l:'Reference',    v:'ARGO Float Observations (INCOIS/LAS)', c:'border-orange-500/30 text-orange-400' },
             { l:'Variable',     v:'Ocean Temperature T(z)',              c:'border-white/15 text-white/60' },
             { l:'Domain',       v:'5°N–30°N, 45°E–105°E',               c:'border-white/15 text-white/60' },
             { l:'Window',       v:`Last ${window.length} observations`,  c:'border-white/15 text-white/60' },
@@ -183,7 +183,7 @@ export default function ModelComparisonPage() {
             <div className="glass rounded-2xl p-6 border border-cyan-500/20 depth-shadow">
               <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
                 <Target size={15} className="text-cyan-400" />
-                Predicted vs Observed — Model vs GLORYS12
+                Predicted vs Observed — Model vs ARGO
               </h3>
               <p className="text-xs text-white/40 mb-4">
                 Each point = one depth-level sample · dashed line = perfect 1:1 agreement · cluster near diagonal = high accuracy
@@ -191,9 +191,9 @@ export default function ModelComparisonPage() {
               <ResponsiveContainer width="100%" height={320}>
                 <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis type="number" dataKey="glorys" name="GLORYS12 (Observed)"
+                  <XAxis type="number" dataKey="argo" name="ARGO (Observed)"
                     tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
-                    label={{ value:'GLORYS12 (Observed °C)', fill:'rgba(255,255,255,0.3)', fontSize:10, position:'insideBottom', offset:-5 }} />
+                    label={{ value:'ARGO (Observed °C)', fill:'rgba(255,255,255,0.3)', fontSize:10, position:'insideBottom', offset:-5 }} />
                   <YAxis type="number" dataKey="model" name="DL Model (Predicted)"
                     tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false} width={42}
                     label={{ value:'DL Model Predicted (°C)', fill:'rgba(255,255,255,0.3)', fontSize:10, angle:-90, position:'insideLeft' }} />
@@ -213,7 +213,7 @@ export default function ModelComparisonPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
-                <h3 className="font-semibold text-white mb-1">Temperature Profile: Model vs GLORYS</h3>
+                <h3 className="font-semibold text-white mb-1">Temperature Profile: Model vs argo</h3>
                 <p className="text-xs text-white/40 mb-4">Latest observation · {latest?.location ?? '—'}</p>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={profileData} layout="vertical">
@@ -227,7 +227,7 @@ export default function ModelComparisonPage() {
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize:'11px', color:'rgba(255,255,255,0.5)' }} />
                     <Line type="monotone" dataKey="Model"  stroke="#06b6d4" strokeWidth={2.5} dot={{ fill:'#06b6d4', r:3 }} name="DL Model (°C)" />
-                    <Line type="monotone" dataKey="GLORYS" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name="GLORYS12 (°C)" />
+                    <Line type="monotone" dataKey="argo" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name="ARGO (°C)" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -235,7 +235,7 @@ export default function ModelComparisonPage() {
               <div className="space-y-5">
                 {/* Difference profile */}
                 <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
-                  <h3 className="font-semibold text-white mb-1">Bias Profile (Model − GLORYS)</h3>
+                  <h3 className="font-semibold text-white mb-1">Bias Profile (Model − argo)</h3>
                   <p className="text-xs text-white/40 mb-4">Positive = model warmer, Negative = model cooler</p>
                   <ResponsiveContainer width="100%" height={160}>
                     <LineChart data={profileData} layout="vertical">
@@ -257,7 +257,7 @@ export default function ModelComparisonPage() {
                       <PolarGrid stroke="rgba(255,255,255,0.08)" />
                       <PolarAngleAxis dataKey="var" tick={{ fill:'rgba(255,255,255,0.5)', fontSize:10 }} />
                       <Radar name="DL Model"  dataKey="model"  stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.15} strokeWidth={2} />
-                      <Radar name="GLORYS12" dataKey="glorys" stroke="#f97316" fill="#f97316" fillOpacity={0.1}  strokeWidth={1.5} />
+                      <Radar name="ARGO" dataKey="argo" stroke="#f97316" fill="#f97316" fillOpacity={0.1}  strokeWidth={1.5} />
                       <Legend wrapperStyle={{ fontSize:'10px', color:'rgba(255,255,255,0.5)' }} />
                     </RadarChart>
                   </ResponsiveContainer>
@@ -290,7 +290,7 @@ export default function ModelComparisonPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
                 <h3 className="font-semibold text-white mb-1">
-                  Temperature at {DEPTH_LEVELS[activeDepthIdx]}m — Model vs GLORYS
+                  Temperature at {DEPTH_LEVELS[activeDepthIdx]}m — Model vs argo
                 </h3>
                 <p className="text-xs text-white/40 mb-4">Last {window.length} observations</p>
                 <ResponsiveContainer width="100%" height={220}>
@@ -301,14 +301,14 @@ export default function ModelComparisonPage() {
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize:'11px', color:'rgba(255,255,255,0.5)' }} />
                     <Line type="monotone" dataKey="Model"  stroke="#06b6d4" strokeWidth={2.5} dot={{ fill:'#06b6d4', r:3 }} name={`Model (°C) @ ${DEPTH_LEVELS[activeDepthIdx]}m`} />
-                    <Line type="monotone" dataKey="GLORYS" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name={`GLORYS (°C) @ ${DEPTH_LEVELS[activeDepthIdx]}m`} />
+                    <Line type="monotone" dataKey="argo" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name={`argo (°C) @ ${DEPTH_LEVELS[activeDepthIdx]}m`} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
                 <h3 className="font-semibold text-white mb-1">
-                  Error (Model − GLORYS) at {DEPTH_LEVELS[activeDepthIdx]}m
+                  Error (Model − argo) at {DEPTH_LEVELS[activeDepthIdx]}m
                 </h3>
                 <p className="text-xs text-white/40 mb-4">Positive = model warmer</p>
                 <ResponsiveContainer width="100%" height={220}>
@@ -332,14 +332,14 @@ export default function ModelComparisonPage() {
         {/* ── Scatter tab ── */}
         {activeTab === 'scatter' && (
           <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow fade-in-up">
-            <h3 className="font-semibold text-white mb-1">Model vs GLORYS Scatter</h3>
+            <h3 className="font-semibold text-white mb-1">Model vs argo Scatter</h3>
             <p className="text-xs text-white/40 mb-4">Each point = one depth-location-time sample · perfect fit = diagonal</p>
             <div className="max-w-xl mx-auto">
               <ResponsiveContainer width="100%" height={380}>
                 <ScatterChart>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis type="number" dataKey="glorys" name="GLORYS12" tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
-                    label={{ value:'GLORYS12 (°C)', fill:'rgba(255,255,255,0.3)', fontSize:10, position:'insideBottom', offset:-2 }} />
+                  <XAxis type="number" dataKey="argo" name="ARGO" tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
+                    label={{ value:'ARGO (°C)', fill:'rgba(255,255,255,0.3)', fontSize:10, position:'insideBottom', offset:-2 }} />
                   <YAxis type="number" dataKey="model"  name="DL Model" tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
                     label={{ value:'DL Model (°C)', fill:'rgba(255,255,255,0.3)', fontSize:10, angle:-90, position:'insideLeft' }} width={40} />
                   <Tooltip cursor={{ fill:'rgba(255,255,255,0.04)' }} content={<CustomTooltip />} />
@@ -375,7 +375,7 @@ export default function ModelComparisonPage() {
 
               <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
                 <h3 className="font-semibold text-white mb-1">R² vs Depth</h3>
-                <p className="text-xs text-white/40 mb-4">Closer to 1.0 = better agreement with GLORYS</p>
+                <p className="text-xs text-white/40 mb-4">Closer to 1.0 = better agreement with argo</p>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart layout="vertical" data={skillTable}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />

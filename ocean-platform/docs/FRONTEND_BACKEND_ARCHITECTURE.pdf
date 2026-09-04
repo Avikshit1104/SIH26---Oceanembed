@@ -1,0 +1,534 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 2331 >>
+stream
+BT
+/F1 9 Tf
+18 800 Td
+0 -14 Td
+/F1 14 Tf
+(OceanIntel Frontend Architecture) Tj
+/F1 9 Tf
+0 -22 Td
+() Tj
+0 -14 Td
+(Project overview) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(OceanIntel is a React single-page application for North Indian Ocean surface observations, subsurface tem) Tj
+0 -14 Td
+(perature reconstruction, forecasts, validation, alerts, maps, and AI-assisted analysis.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Current frontend stack) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(  ? React 19 and TypeScript 6) Tj
+0 -14 Td
+(  ? Vite 8) Tj
+0 -14 Td
+(  ? React Router 7) Tj
+0 -14 Td
+(  ? Tailwind CSS 4) Tj
+0 -14 Td
+(  ? Leaflet and React Leaflet for 2D maps) Tj
+0 -14 Td
+(  ? Three.js, React Three Fiber, and Drei for 3D ocean visualisation) Tj
+0 -14 Td
+(  ? Recharts for analytical charts) Tj
+0 -14 Td
+(  ? Lucide React for icons) Tj
+0 -14 Td
+(  ? date-fns for date handling) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Current application boundaries) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(`App.tsx` owns routing, lazy page loading, providers, protected routes, and global effects. `AuthContext.) Tj
+0 -14 Td
+(tsx` owns authentication state. `DataContext.tsx` owns records, alerts, mock data generation, and localSt) Tj
+0 -14 Td
+(orage persistence. Pages currently consume these contexts directly.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(The current login, NetCDF parsing, reconstruction, forecast, and alert data are mock or client-generated.) Tj
+0 -14 Td
+( These are the main boundaries to replace during backend integration.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Target architecture) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Pages should render data and trigger actions. They should not perform HTTP requests, parse NetCDF files, ) Tj
+0 -14 Td
+(run ML inference, or own persistence logic.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(React pages and feature components) Tj
+0 -14 Td
+(        |) Tj
+0 -14 Td
+(Typed API hooks and query cache) Tj
+0 -14 Td
+(        |) Tj
+0 -14 Td
+(Central API client and auth handling) Tj
+0 -14 Td
+(        |) Tj
+0 -14 Td
+(FastAPI backend /api/v1) Tj
+0 -14 Td
+(        |) Tj
+0 -14 Td
+(PostgreSQL + PostGIS | Object storage | ML workers | Redis queue) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Recommended folder structure) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(src/) Tj
+0 -14 Td
+(  app/                 App, router, providers, error boundary) Tj
+0 -14 Td
+(  config/              Environment variables and constants) Tj
+0 -14 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 3058 >>
+stream
+BT
+/F1 9 Tf
+18 800 Td
+0 -14 Td
+/F1 14 Tf
+(  api/                 API client, errors, query keys, endpoint modules) Tj
+/F1 9 Tf
+0 -22 Td
+(  auth/                Auth provider, user types, permissions, route guards) Tj
+0 -14 Td
+(  features/) Tj
+0 -14 Td
+(    surface/           Heatmap, filters, API hooks, domain types) Tj
+0 -14 Td
+(    reconstruction/    Profiles, reconstruction jobs, metrics) Tj
+0 -14 Td
+(    forecast/          Forecast charts, forecast queries, types) Tj
+0 -14 Td
+(    uploads/           NetCDF dropzone, progress, upload jobs) Tj
+0 -14 Td
+(    alerts/            Alert list, acknowledgement, audit log) Tj
+0 -14 Td
+(    chat/              Chat sessions, messages, streaming responses) Tj
+0 -14 Td
+(    validation/        ARGO comparisons and skill metrics) Tj
+0 -14 Td
+(    maps/              World and regional map features) Tj
+0 -14 Td
+(  components/) Tj
+0 -14 Td
+(    layout/            Navbar and page layout) Tj
+0 -14 Td
+(    ui/                Reusable buttons, modals, states, spinners) Tj
+0 -14 Td
+(    charts/            Shared chart primitives) Tj
+0 -14 Td
+(    maps/              Shared map primitives) Tj
+0 -14 Td
+(    ocean/             Domain-specific visual components) Tj
+0 -14 Td
+(  hooks/               Generic reusable hooks) Tj
+0 -14 Td
+(  types/               Shared API, user, ocean, and pagination types) Tj
+0 -14 Td
+(  utils/               Formatting, geography, validation, downloads) Tj
+0 -14 Td
+(  styles/              Global styles and design tokens) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(API client) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Create one client in `src/api/client.ts`. Configure the base URL with `VITE_API_URL`. The client should h) Tj
+0 -14 Td
+(andle JSON headers, credentials, token refresh, common errors, request cancellation, and file uploads. Pa) Tj
+0 -14 Td
+(ges and components should call feature API modules rather than `fetch` directly.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Recommended dependency: TanStack Query. It should own server state, caching, refetching, loading states, ) Tj
+0 -14 Td
+(retries, mutations, and cache invalidation. Keep React context for authentication and UI state only.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Authentication) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Recommended flow:) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(  1. Login with `POST /api/v1/auth/login`.) Tj
+0 -14 Td
+(  2. Keep the access token short-lived and in memory.) Tj
+0 -14 Td
+(  3. Store the refresh token in an HttpOnly, Secure, SameSite cookie.) Tj
+0 -14 Td
+(  4. Refresh through `POST /api/v1/auth/refresh`.) Tj
+0 -14 Td
+(  5. Load the current user through `GET /api/v1/auth/me`.) Tj
+0 -14 Td
+(  6. Logout through `POST /api/v1/auth/logout`.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Frontend route guards improve user experience, but every backend endpoint must enforce permissions. Sugge) Tj
+0 -14 Td
+(sted permissions include `records:read`, `records:write`, `forecasts:read`, `alerts:acknowledge`, `alerts) Tj
+0 -14 Td
+(:dispatch`, `validation:read`, and `government:portal`.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Backend API contract) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 2210 >>
+stream
+BT
+/F1 9 Tf
+18 800 Td
+0 -14 Td
+/F1 14 Tf
+(Records and surface data) Tj
+/F1 9 Tf
+0 -22 Td
+() Tj
+0 -14 Td
+(GET    /records) Tj
+0 -14 Td
+(GET    /records/latest) Tj
+0 -14 Td
+(GET    /records/{recordId}) Tj
+0 -14 Td
+(GET    /records/by-date/{date}) Tj
+0 -14 Td
+(POST   /records) Tj
+0 -14 Td
+(GET    /surface/observations) Tj
+0 -14 Td
+(GET    /surface/grid?variable=sst&date=2026-09-05) Tj
+0 -14 Td
+(GET    /surface/point?lat=15.5&lon=88&date=2026-09-05) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(The surface grid response should include variable, unit, date, bounds, resolution, and a two-dimensional ) Tj
+0 -14 Td
+(values array. The backend should provide the processed grid; the browser should only visualise it. Move t) Tj
+0 -14 Td
+(he current client-side IDW interpolation out of `SurfacePage` when real gridded data is available.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Reconstruction and forecasts) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(POST /reconstructions) Tj
+0 -14 Td
+(GET  /reconstructions/{id}) Tj
+0 -14 Td
+(GET  /reconstructions/{id}/profile) Tj
+0 -14 Td
+(GET  /reconstructions/{id}/metrics) Tj
+0 -14 Td
+(GET  /forecasts) Tj
+0 -14 Td
+(GET  /forecasts/{id}/profile) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Long-running reconstruction and forecast operations should return a job with `queued`, `processing`, `com) Tj
+0 -14 Td
+(pleted`, or `failed` status and a progress value. The frontend can poll or subscribe to job updates.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Alerts and chat) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(GET   /alerts) Tj
+0 -14 Td
+(POST  /alerts) Tj
+0 -14 Td
+(PATCH /alerts/{alertId}/acknowledge) Tj
+0 -14 Td
+(GET   /alerts/audit-log) Tj
+0 -14 Td
+(POST  /chat/sessions) Tj
+0 -14 Td
+(GET   /chat/sessions/{sessionId}/messages) Tj
+0 -14 Td
+(POST  /chat/sessions/{sessionId}/messages) Tj
+0 -14 Td
+(POST  /chat/sessions/{sessionId}/messages/stream) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Use Server-Sent Events or WebSockets for streamed AI responses and live processing status.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Validation) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(GET /validation/summary) Tj
+0 -14 Td
+(GET /validation/by-depth) Tj
+0 -14 Td
+(GET /validation/argo-collocations) Tj
+0 -14 Td
+(GET /validation/{recordId}) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(NetCDF upload workflow) Tj
+0 -14 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 2185 >>
+stream
+BT
+/F1 9 Tf
+18 800 Td
+0 -14 Td
+/F1 14 Tf
+() Tj
+/F1 9 Tf
+0 -22 Td
+(  1. Frontend calls `POST /uploads/initiate`.) Tj
+0 -14 Td
+(  2. Backend returns a signed object-storage URL.) Tj
+0 -14 Td
+(  3. Frontend uploads the NetCDF file directly to object storage.) Tj
+0 -14 Td
+(  4. Frontend calls `POST /uploads/{uploadId}/complete`.) Tj
+0 -14 Td
+(  5. Backend queues parsing, validation, and ML inference.) Tj
+0 -14 Td
+(  6. Frontend polls `GET /uploads/{uploadId}/status` or listens for events.) Tj
+0 -14 Td
+(  7. Completed records become available through the records API.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Use `xarray`, `netCDF4`, NumPy, Dask, and Zarr on the backend. Avoid sending large NetCDF files through a) Tj
+0 -14 Td
+( JSON API.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Core frontend data types) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(interface OceanRecord {) Tj
+0 -14 Td
+(  id: string;) Tj
+0 -14 Td
+(  date: string;) Tj
+0 -14 Td
+(  location: string;) Tj
+0 -14 Td
+(  latitude: number;) Tj
+0 -14 Td
+(  longitude: number;) Tj
+0 -14 Td
+(  inputs: SurfaceInputs;) Tj
+0 -14 Td
+(  profile: DepthProfile;) Tj
+0 -14 Td
+(  mld: number;) Tj
+0 -14 Td
+(  ohc: number;) Tj
+0 -14 Td
+(  thermoclineDepth: number;) Tj
+0 -14 Td
+(  modelVersion: string;) Tj
+0 -14 Td
+(  dataSources: string[];) Tj
+0 -14 Td
+(  processedAt: string;) Tj
+0 -14 Td
+(}) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Represent missing ARGO values as `null`, not by filtering arrays. Depths, temperatures, and validation me) Tj
+0 -14 Td
+(trics must retain identical indexes.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(State ownership) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(| State | Owner |) Tj
+0 -14 Td
+(|---|---|) Tj
+0 -14 Td
+(| Authenticated user | Auth provider |) Tj
+0 -14 Td
+(| Records, forecasts, alerts | TanStack Query |) Tj
+0 -14 Td
+(| Upload progress | Upload feature hook |) Tj
+0 -14 Td
+(| Chat session and messages | Chat feature and backend |) Tj
+0 -14 Td
+(| URL filters | React Router search params |) Tj
+0 -14 Td
+(| Form values | Local state or React Hook Form |) Tj
+0 -14 Td
+(| Tabs, modals, selected map point | Local component state |) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Suggested backend technology) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(  ? FastAPI and Pydantic for the API) Tj
+0 -14 Td
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 1539 >>
+stream
+BT
+/F1 9 Tf
+18 800 Td
+0 -14 Td
+/F1 14 Tf
+(  ? PostgreSQL with PostGIS for users, records, locations, and spatial queries) Tj
+/F1 9 Tf
+0 -22 Td
+(  ? TimescaleDB for high-volume time-series data) Tj
+0 -14 Td
+(  ? S3-compatible storage for NetCDF and model artifacts) Tj
+0 -14 Td
+(  ? PyTorch for inference) Tj
+0 -14 Td
+(  ? Redis with Celery, Dramatiq, or RQ for background jobs) Tj
+0 -14 Td
+(  ? xarray, netCDF4, NumPy, pandas, Dask, and Zarr for scientific data processing) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Migration sequence) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(  1. Add `src/api/client.ts`, environment configuration, and shared API types.) Tj
+0 -14 Td
+(  2. Replace mock login with the authentication endpoints.) Tj
+0 -14 Td
+(  3. Add TanStack Query and create records and alerts API hooks.) Tj
+0 -14 Td
+(  4. Replace `DataContext.records` with query-backed records.) Tj
+0 -14 Td
+(  5. Move profile generation and forecasts to backend services.) Tj
+0 -14 Td
+(  6. Integrate signed NetCDF uploads and processing jobs.) Tj
+0 -14 Td
+(  7. Add alert mutations and audit history.) Tj
+0 -14 Td
+(  8. Add chat sessions and streamed responses.) Tj
+0 -14 Td
+(  9. Add consistent loading, empty, error, retry, and permission states.) Tj
+0 -14 Td
+(  10. Generate TypeScript types from the backend OpenAPI schema.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(The first high-value refactor is separating API access from `AuthContext` and `DataContext`. This allows ) Tj
+0 -14 Td
+(the existing interface to migrate page by page without rewriting the visual layer.) Tj
+0 -14 Td
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000141 00000 n 
+0000000211 00000 n 
+0000002594 00000 n 
+0000002720 00000 n 
+0000005830 00000 n 
+0000005956 00000 n 
+0000008218 00000 n 
+0000008344 00000 n 
+0000010582 00000 n 
+0000010710 00000 n 
+0000012302 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+12430
+%%EOF

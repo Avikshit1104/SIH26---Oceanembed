@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   BarChart2, CheckCircle, XCircle,
-  Target, Calendar, Layers,
+  Target, Calendar,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
@@ -73,7 +73,6 @@ export default function ValidationPage() {
 
   const [mode, setMode]       = useState<'sst' | 'ohc'>('sst');
   const [dateIdx, setDateIdx] = useState(records.length - 1);
-  const [showDiff, setShowDiff] = useState(false);
 
   const ROWS = 12, COLS = 16;
 
@@ -135,14 +134,6 @@ export default function ValidationPage() {
             ))}
           </div>
 
-          <button onClick={() => setShowDiff(d => !d)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl glass border text-sm transition-all ${
-              showDiff ? 'border-purple-500/30 text-purple-400' : 'border-white/10 text-white/50'
-            }`}>
-            <Layers size={13} />
-            {showDiff ? 'Hide' : 'Show'} Bias Map
-          </button>
-
           <span className="ml-auto text-xs text-white/40">
             {records[dateIdx] ? format(parseISO(records[dateIdx].date), 'MMMM d, yyyy') : '—'}
           </span>
@@ -160,36 +151,64 @@ export default function ValidationPage() {
           </div>
         </div>
 
-        {/* Heatmaps — model field + optional bias map */}
-        <div className={`grid gap-5 mb-8 ${showDiff ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-1'}`}>
-          <div className="glass rounded-2xl p-5 border border-cyan-500/20">
+        {/* Heatmaps — always show Model + ARGO + Bias side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          {/* Model output */}
+          <div className="glass rounded-2xl p-5 border border-cyan-500/25 depth-shadow">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-white text-sm">
-                {mode === 'sst' ? 'Reconstructed SST Field' : 'Reconstructed OHC Field'}
+              <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+                Model Output
               </h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">DL Model output</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">DL Reconstruction</span>
             </div>
             <HeatmapGrid
               data={modelField}
               colorFn={sstColor}
-              label={`${mode === 'sst' ? 'SST (°C)' : 'OHC proxy (°C)'} · North Indian Ocean`}
+              label={`${mode === 'sst' ? 'SST (°C)' : 'OHC proxy (°C)'} · NIO`}
             />
+            <div className="mt-2 flex justify-between text-[10px] text-white/30">
+              <span>CNN-ViT Embedding v38</span>
+              <span>{COLS}×{ROWS} cells</span>
+            </div>
           </div>
 
-          {showDiff && (
-            <div className="glass rounded-2xl p-5 border border-purple-500/20 fade-in-up">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-white text-sm">Bias Map (Model − ARGO)</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Bias field</span>
-              </div>
-              <HeatmapGrid data={diffField} colorFn={diffColorFn} label="Blue = cold bias · Green = neutral · Red = warm bias" />
-              <div className="flex items-center justify-between mt-2 text-xs text-white/30">
-                <span className="text-blue-400">Cold bias (−)</span>
-                <span className="text-green-400">Neutral</span>
-                <span className="text-red-400">Warm bias (+)</span>
-              </div>
+          {/* ARGO observations */}
+          <div className="glass rounded-2xl p-5 border border-green-500/25 depth-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                ARGO Observations
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">Ground Truth</span>
             </div>
-          )}
+            <HeatmapGrid
+              data={argoField}
+              colorFn={sstColor}
+              label={`${mode === 'sst' ? 'SST (°C)' : 'OHC proxy (°C)'} · NIO`}
+            />
+            <div className="mt-2 flex justify-between text-[10px] text-white/30">
+              <span>INCOIS Gridded ARGO / LAS</span>
+              <span>{COLS}×{ROWS} cells</span>
+            </div>
+          </div>
+
+          {/* Bias map */}
+          <div className="glass rounded-2xl p-5 border border-purple-500/25 depth-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" />
+                Bias Map
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Model − ARGO</span>
+            </div>
+            <HeatmapGrid data={diffField} colorFn={diffColorFn} label="Blue=cold · Green=neutral · Red=warm" />
+            <div className="flex items-center justify-between mt-2 text-[10px]">
+              <span className="text-blue-400">Cold bias (−)</span>
+              <span className="text-green-400">Neutral (0)</span>
+              <span className="text-red-400">Warm bias (+)</span>
+            </div>
+          </div>
         </div>
 
         {/* Skill metrics */}

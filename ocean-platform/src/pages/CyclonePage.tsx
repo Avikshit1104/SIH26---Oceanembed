@@ -191,25 +191,93 @@ export default function CyclonePage() {
           )}
 
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formation probability donut */}
+            {/* Cyclone animation + probability */}
             <div className="flex flex-col items-center justify-center py-2">
-              <div className="relative w-40 h-40">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-                  <circle cx="60" cy="60" r="50" fill="none"
-                    stroke={riskHex}
-                    strokeWidth="10"
-                    strokeDasharray={`${risk.score * 3.14} 314`}
-                    strokeLinecap="round"
-                    style={{ filter: `drop-shadow(0 0 10px ${riskHex})` }}
+              {/* Animated cyclone SVG */}
+              <div className="relative w-44 h-44 mb-3">
+                <svg
+                  viewBox="0 0 200 200"
+                  className="w-full h-full"
+                  style={{
+                    animation: risk.score >= 30
+                      ? `spin ${risk.score >= 70 ? '3s' : risk.score >= 50 ? '5s' : '8s'} linear infinite`
+                      : 'none',
+                  }}
+                >
+                  <defs>
+                    <radialGradient id="eyeGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor={riskHex} stopOpacity="0.9" />
+                      <stop offset="100%" stopColor={riskHex} stopOpacity="0" />
+                    </radialGradient>
+                    <filter id="cycloneGlow">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                  </defs>
+
+                  {/* Outer glow ring */}
+                  <circle cx="100" cy="100" r="90" fill="none"
+                    stroke={riskHex} strokeWidth="1" strokeOpacity="0.15" />
+
+                  {/* Spiral arms — each is an arc path that looks like a cyclone band */}
+                  {[0, 60, 120, 180, 240, 300].map((startDeg, i) => {
+                    const rad    = (startDeg * Math.PI) / 180;
+                    const r1     = 20 + i * 10;
+                    const r2     = r1 + 14;
+                    const x1     = 100 + r1 * Math.cos(rad);
+                    const y1     = 100 + r1 * Math.sin(rad);
+                    const cpx    = 100 + (r1 + 20) * Math.cos(rad + 0.6);
+                    const cpy    = 100 + (r1 + 20) * Math.sin(rad + 0.6);
+                    const x2     = 100 + r2 * Math.cos(rad + 1.2);
+                    const y2     = 100 + r2 * Math.sin(rad + 1.2);
+                    const alpha  = 0.15 + (i / 6) * 0.55;
+                    return (
+                      <path key={i}
+                        d={`M ${x1} ${y1} Q ${cpx} ${cpy} ${x2} ${y2}`}
+                        fill="none"
+                        stroke={riskHex}
+                        strokeWidth={3 - i * 0.2}
+                        strokeLinecap="round"
+                        strokeOpacity={alpha}
+                        filter="url(#cycloneGlow)"
+                      />
+                    );
+                  })}
+
+                  {/* Inner band rings */}
+                  {[35, 55, 70].map((r, i) => (
+                    <circle key={r} cx="100" cy="100" r={r}
+                      fill="none"
+                      stroke={riskHex}
+                      strokeWidth={1.5 - i * 0.3}
+                      strokeOpacity={0.20 - i * 0.04}
+                      strokeDasharray={`${r * 0.8} ${r * 0.4}`}
+                    />
+                  ))}
+
+                  {/* Eye wall */}
+                  <circle cx="100" cy="100" r="18"
+                    fill={`${riskHex}22`}
+                    stroke={riskHex} strokeWidth="2.5" strokeOpacity="0.7"
+                    filter="url(#cycloneGlow)"
                   />
+
+                  {/* Eye (calm centre) */}
+                  <circle cx="100" cy="100" r="9" fill="url(#eyeGrad)" />
+                  <circle cx="100" cy="100" r="5"
+                    fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black text-white">{risk.score}%</span>
-                  <span className="text-xs text-white/40">formation</span>
+
+                {/* Score overlay in centre */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-3xl font-black text-white" style={{ textShadow: `0 0 20px ${riskHex}` }}>
+                    {risk.score}%
+                  </span>
+                  <span className="text-[10px] text-white/40 mt-0.5">formation</span>
                 </div>
               </div>
-              <span className={`mt-3 text-sm font-bold px-4 py-1.5 rounded-full border ${
+
+              <span className={`text-sm font-bold px-4 py-1.5 rounded-full border ${
                 risk.label === 'Severe'  ? 'bg-red-500/20    text-red-400    border-red-500/40' :
                 risk.label === 'High'    ? 'bg-orange-500/20 text-orange-400 border-orange-500/40' :
                 risk.label === 'Moderate'? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40' :
@@ -217,6 +285,13 @@ export default function CyclonePage() {
               }`}>
                 {risk.label} Risk
               </span>
+
+              {/* Rotation speed label */}
+              <p className="text-[10px] text-white/25 mt-2">
+                {risk.score >= 70 ? '⚡ Rapidly intensifying' :
+                 risk.score >= 50 ? '↻ Active rotation' :
+                 risk.score >= 30 ? '〜 Slow spiral' : '◎ Low activity'}
+              </p>
             </div>
 
             {/* Prediction details */}
