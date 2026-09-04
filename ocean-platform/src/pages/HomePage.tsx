@@ -284,7 +284,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#020917]">
+    <div className="min-h-screen" style={{ background: 'transparent' }}>
       <Navbar />
       <DepthMeter depth={scrollDepth} />
 
@@ -295,9 +295,9 @@ export default function HomePage() {
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
           {/* Background layers */}
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#020917] via-[#041530] to-[#020c22]" />
+            <div className="absolute inset-0" style={{ background: 'transparent' }} />
             <div className="absolute inset-0"
-              style={{ backgroundImage: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(6,182,212,0.18), transparent)' }} />
+              style={{ backgroundImage: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(6,182,212,0.12), transparent)' }} />
             {/* Subtle bioluminescence flickers */}
             {[...Array(8)].map((_, i) => (
               <div key={i} className="absolute rounded-full"
@@ -494,7 +494,7 @@ export default function HomePage() {
 
         {/* ── 1000m — Abyssal — Feature Grid ── */}
         <section className="relative py-28 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020c22] to-[#020917]" />
+          <div className="absolute inset-0" style={{ background: 'transparent' }} />
           <div className="absolute inset-0"
             style={{ backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 90%, rgba(124,58,237,0.14), transparent)' }} />
 

@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import WaveBackground from './components/WaveBackground';
+// WaterEffects stubs kept for import compat (both return null)
 import { WaterCursorTrail, BubbleClickEffect } from './components/WaterEffects';
 
 // Eagerly loaded
@@ -25,8 +27,8 @@ const ModelComparisonPage = lazy(() => import('./pages/ModelComparisonPage'));
 
 function PageLoader() {
   return (
-    <div className="min-h-screen gradient-ocean flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'transparent' }}>
+      <div className="flex flex-col items-center gap-4" style={{ zIndex: 10, position: 'relative' }}>
         <div className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
         <p className="text-white/40 text-sm">Loading...</p>
       </div>
@@ -37,6 +39,8 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Global animated wave background — fixed, behind all content */}
+      <WaveBackground />
       <WaterCursorTrail />
       <BubbleClickEffect />
       <AuthProvider>

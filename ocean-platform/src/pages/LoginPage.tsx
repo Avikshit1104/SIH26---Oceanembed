@@ -45,9 +45,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen gradient-ocean bg-grid flex items-center justify-center p-4">
-      {/* Ambient glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <div className="min-h-screen bg-grid flex items-center justify-center p-4" style={{ background: 'transparent' }}>
+      {/* Ambient glows — sit above wave canvas */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl" />
       </div>
