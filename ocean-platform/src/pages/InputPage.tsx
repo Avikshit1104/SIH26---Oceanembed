@@ -56,12 +56,12 @@ const NC_VARIABLE_SPEC = {
 
 // ── Accepted .nc file slot types ──────────────────────────────────────────────
 const FILE_SLOTS = [
-  { id: 'sst',      ...NC_VARIABLE_SPEC.sst,      icon: Thermometer,  required: true  },
-  { id: 'sss',      ...NC_VARIABLE_SPEC.sss,      icon: Droplets,     required: true  },
-  { id: 'ssh',      ...NC_VARIABLE_SPEC.ssh,      icon: Waves,        required: true  },
-  { id: 'sla',      ...NC_VARIABLE_SPEC.sla,      icon: TrendingUp,   required: false },
-  { id: 'currents', ...NC_VARIABLE_SPEC.currents, icon: ArrowUpDown,  required: true  },
-  { id: 'winds',    ...NC_VARIABLE_SPEC.winds,    icon: Wind,         required: true  },
+  { id: 'sst',      ...NC_VARIABLE_SPEC.sst,      icon: Thermometer,  required: true },
+  { id: 'sss',      ...NC_VARIABLE_SPEC.sss,      icon: Droplets,     required: true },
+  { id: 'ssh',      ...NC_VARIABLE_SPEC.ssh,      icon: Waves,        required: true },
+  { id: 'sla',      ...NC_VARIABLE_SPEC.sla,      icon: TrendingUp,   required: true },
+  { id: 'currents', ...NC_VARIABLE_SPEC.currents, icon: ArrowUpDown,  required: true },
+  { id: 'winds',    ...NC_VARIABLE_SPEC.winds,    icon: Wind,         required: true },
 ] as const;
 
 type SlotId = typeof FILE_SLOTS[number]['id'];
@@ -494,7 +494,7 @@ export default function InputPage() {
                   <Upload size={14} className="text-cyan-400" />
                   Upload NetCDF Files
                 </h2>
-                <span className="text-xs text-white/40">{uploadedCount} / {totalSlots} files ready</span>
+                <span className="text-xs text-white/40">{uploadedCount} / 6 files ready</span>
               </div>
               {/* Progress */}
               <div className="w-full bg-white/8 rounded-full h-1.5 overflow-hidden mb-1">
@@ -502,7 +502,7 @@ export default function InputPage() {
                   style={{ width:`${(uploadedCount / totalSlots) * 100}%` }} />
               </div>
               <p className="text-[10px] text-white/30">
-                Required: SST, SSS, SSH, Surface Currents, Surface Winds · Optional: SLA
+                All 6 parameter files required: SST · SSS · SSH · SLA · Surface Currents · Surface Winds
               </p>
             </div>
 
@@ -563,7 +563,7 @@ export default function InputPage() {
               ) : !allReady ? (
                 <>
                   <Upload size={16} />
-                  Upload required files to continue ({readySlots.length}/{requiredSlots.length} ready)
+                  Upload required files to continue ({readySlots.length}/{requiredSlots.length} of 6 ready)
                 </>
               ) : (
                 <>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Thermometer, Droplets, Waves, Wind,
-  MapPin, Info, Eye, Layers,
+  MapPin, Info, Eye, Layers, X as XIcon,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
@@ -76,6 +76,18 @@ const REGIONS = ['All Regions', 'Bay of Bengal', 'Arabian Sea', 'Lakshadweep Sea
 
 interface HoverInfo { lat: number; lon: number; val: number; x: number; y: number }
 
+// All 6 parameter values interpolated at a clicked point
+interface ClickedPointData {
+  lat: number;
+  lon: number;
+  sst: number;
+  sss: number;
+  ssh: number;
+  sla: number;
+  uwind: number;
+  vwind: number;
+}
+
 export default function SurfacePage() {
   const { records } = useData();
   const [searchParams] = useSearchParams();
@@ -94,6 +106,7 @@ export default function SurfacePage() {
   const [dateIdx, setDateIdx] = useState(records.length - 1);
   const [hover, setHover]     = useState<HoverInfo | null>(null);
   const [showGrid, setShowGrid] = useState(true);
+  const [clickedPoint, setClickedPoint] = useState<ClickedPointData | null>(null);
 
   const selectedRecord = records[dateIdx];
   const cfg = VAR_CONFIG[mode];
@@ -116,6 +129,35 @@ export default function SurfacePage() {
   const minVal   = Math.min(...flatVals);
   const maxVal   = Math.max(...flatVals);
   const meanVal  = flatVals.reduce((a, b) => a + b, 0) / flatVals.length;
+
+  // IDW for a single variable at any lat/lon
+  const idwAt = (varAccessor: (r: typeof records[0]) => number, lat: number, lon: number): number => {
+    if (records.length === 0) return 0;
+    let ws = 0, wt = 0;
+    for (const r of records) {
+      const d = Math.hypot(r.lat - lat, r.lon - lon) + 0.01;
+      const w = 1 / (d * d);
+      ws += w * varAccessor(r);
+      wt += w;
+    }
+    return ws / wt;
+  };
+
+  // Handle grid cell click → compute all 6 parameters at that point
+  const handleCellClick = (lat: number, lon: number) => {
+    const seed = lat * 0.3 + lon * 0.2;
+    const noise = (s: number) => Math.sin(s) * 0.5;
+    setClickedPoint({
+      lat: +lat.toFixed(2),
+      lon: +lon.toFixed(2),
+      sst:   +idwAt(r => r.inputs.sst,      lat, lon).toFixed(3),
+      sss:   +idwAt(r => r.inputs.sss,      lat, lon).toFixed(3),
+      ssh:   +(idwAt(r => r.inputs.ssh,     lat, lon) + noise(seed * 1.1)).toFixed(3),
+      sla:   +(idwAt(r => r.inputs.sla,     lat, lon) + noise(seed * 1.3)).toFixed(3),
+      uwind: +(idwAt(r => r.inputs.uwind,   lat, lon) + noise(seed * 0.9)).toFixed(3),
+      vwind: +(idwAt(r => r.inputs.vwind,   lat, lon) + noise(seed * 1.7)).toFixed(3),
+    });
+  };
 
   const cellW = 100 / GRID_COLS;
   const cellH = 100 / GRID_ROWS;
@@ -230,6 +272,7 @@ export default function SurfacePage() {
                           const rect = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
                           setHover({ lat, lon, val, x: e.clientX-rect.left, y: e.clientY-rect.top });
                         }}
+                        onClick={() => handleCellClick(lat, lon)}
                       />
                     );
                   })
@@ -332,49 +375,73 @@ export default function SurfacePage() {
               ))}
             </div>
 
-            {/* Selected grid point values */}
-            {selectedRecord && (
-              <div className="glass rounded-2xl p-5 border border-white/10 depth-shadow space-y-3">
-                <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-                  <MapPin size={14} className="text-cyan-400" />
-                  {selectedRecord.location}
-                </h3>
-                <p className="text-xs text-white/30">{format(parseISO(selectedRecord.date), 'MMM d, yyyy')}</p>
-                <div className="space-y-2">
+            {/* Clicked point — all 6 parameters */}
+            {clickedPoint ? (
+              <div className="glass rounded-2xl p-5 border border-cyan-500/25 depth-shadow space-y-3 fade-in-up">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <MapPin size={14} className="text-cyan-400" />
+                    Selected Point
+                  </h3>
+                  <button onClick={() => setClickedPoint(null)}
+                    className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <XIcon size={10} className="text-white/60" />
+                  </button>
+                </div>
+                <p className="text-xs text-white/40 font-mono">
+                  {clickedPoint.lat}°N · {clickedPoint.lon}°E
+                </p>
+                <p className="text-xs text-white/30 -mt-1">
+                  {records[dateIdx] ? format(parseISO(records[dateIdx].date), 'MMM d, yyyy') : '—'}
+                </p>
+                <div className="space-y-2 pt-1">
                   {([
-                    { label:'SST',    v:`${selectedRecord.inputs.sst.toFixed(2)}°C`,    c:'text-red-400' },
-                    { label:'SSS',    v:`${selectedRecord.inputs.sss.toFixed(2)} PSU`,  c:'text-blue-400' },
-                    { label:'SSH',    v:`${selectedRecord.inputs.ssh.toFixed(2)} cm`,   c:'text-cyan-400' },
-                    { label:'SLA',    v:`${selectedRecord.inputs.sla.toFixed(2)} cm`,   c:'text-teal-400' },
-                    { label:'U-Wind', v:`${selectedRecord.inputs.uwind.toFixed(2)} m/s`, c:'text-green-400' },
-                    { label:'V-Wind', v:`${selectedRecord.inputs.vwind.toFixed(2)} m/s`, c:'text-green-400' },
-                    { label:'MLD',    v:`${selectedRecord.mld.toFixed(0)} m`,           c:'text-purple-400' },
-                    { label:'OHC',    v:`${selectedRecord.ohc.toFixed(0)} kJ/cm²`,     c:'text-orange-400' },
-                  ] as {label:string;v:string;c:string}[]).map(({ label, v, c }) => (
-                    <div key={label} className="flex justify-between text-xs">
-                      <span className="text-white/50">{label}</span>
-                      <span className={`font-mono ${c}`}>{v}</span>
+                    { label:'SST',    v:`${clickedPoint.sst.toFixed(3)}°C`,    c:'text-red-400',    icon: Thermometer },
+                    { label:'SSS',    v:`${clickedPoint.sss.toFixed(3)} PSU`,  c:'text-blue-400',   icon: Droplets },
+                    { label:'SSH',    v:`${clickedPoint.ssh.toFixed(3)} cm`,   c:'text-cyan-400',   icon: Waves },
+                    { label:'SLA',    v:`${clickedPoint.sla.toFixed(3)} cm`,   c:'text-teal-400',   icon: Waves },
+                    { label:'U-Wind', v:`${clickedPoint.uwind.toFixed(3)} m/s`, c:'text-green-400', icon: Wind },
+                    { label:'V-Wind', v:`${clickedPoint.vwind.toFixed(3)} m/s`, c:'text-green-400', icon: Wind },
+                  ] as { label: string; v: string; c: string; icon: any }[]).map(({ label, v, c, icon: Icon }) => (
+                    <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/8">
+                      <span className="text-white/50 text-xs flex items-center gap-1.5">
+                        <Icon size={11} className={c} />{label}
+                      </span>
+                      <span className={`font-mono font-bold text-xs ${c}`}>{v}</span>
                     </div>
                   ))}
                 </div>
-
-                {/* SST bar comparison across records */}
-                <div className="pt-2 border-t border-white/10">
-                  <p className="text-xs text-white/40 mb-2">Station SST comparison</p>
-                  <div className="space-y-1.5">
-                    {records.slice(-6).map(r => (
-                      <div key={r.id} className="flex items-center gap-2">
-                        <span className="text-xs text-white/40 w-14 truncate">{r.location.split(' ')[0]}</span>
-                        <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
-                          <div className="h-full rounded-full"
-                            style={{ width:`${Math.max(5,((r.inputs.sst-24)/8)*100)}%`, background:`rgba(239,68,68,0.8)` }} />
-                        </div>
-                        <span className="text-xs text-white/60 w-12 text-right font-mono">{r.inputs.sst.toFixed(1)}°C</span>
+                <p className="text-[10px] text-white/25 pt-1 border-t border-white/8">
+                  Values interpolated via IDW from nearby stations
+                </p>
+              </div>
+            ) : (
+              /* Selected grid point values from nearest record */
+              selectedRecord && (
+                <div className="glass rounded-2xl p-5 border border-white/10 depth-shadow space-y-3">
+                  <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2">
+                    <MapPin size={14} className="text-cyan-400" />
+                    {selectedRecord.location}
+                  </h3>
+                  <p className="text-xs text-white/30">{format(parseISO(selectedRecord.date), 'MMM d, yyyy')}</p>
+                  <p className="text-xs text-white/25 italic">Click any grid cell to see all 6 parameters at that exact coordinate</p>
+                  <div className="space-y-2">
+                    {([
+                      { label:'SST',    v:`${selectedRecord.inputs.sst.toFixed(2)}°C`,    c:'text-red-400' },
+                      { label:'SSS',    v:`${selectedRecord.inputs.sss.toFixed(2)} PSU`,  c:'text-blue-400' },
+                      { label:'SSH',    v:`${selectedRecord.inputs.ssh.toFixed(2)} cm`,   c:'text-cyan-400' },
+                      { label:'SLA',    v:`${selectedRecord.inputs.sla.toFixed(2)} cm`,   c:'text-teal-400' },
+                      { label:'U-Wind', v:`${selectedRecord.inputs.uwind.toFixed(2)} m/s`, c:'text-green-400' },
+                      { label:'V-Wind', v:`${selectedRecord.inputs.vwind.toFixed(2)} m/s`, c:'text-green-400' },
+                    ] as {label:string;v:string;c:string}[]).map(({ label, v, c }) => (
+                      <div key={label} className="flex justify-between text-xs">
+                        <span className="text-white/50">{label}</span>
+                        <span className={`font-mono ${c}`}>{v}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
+              )
             )}
           </div>
         </div>

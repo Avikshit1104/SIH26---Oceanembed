@@ -178,56 +178,90 @@ export default function ModelComparisonPage() {
 
         {/* ── Profile tab ── */}
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in-up">
-            <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
-              <h3 className="font-semibold text-white mb-1">Temperature Profile: Model vs GLORYS</h3>
-              <p className="text-xs text-white/40 mb-4">Latest observation · {latest?.location ?? '—'}</p>
-              <ResponsiveContainer width="100%" height={340}>
-                <LineChart data={profileData} layout="vertical">
+          <div className="space-y-6 fade-in-up">
+            {/* Predicted vs Observed scatter — prominent at top */}
+            <div className="glass rounded-2xl p-6 border border-cyan-500/20 depth-shadow">
+              <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                <Target size={15} className="text-cyan-400" />
+                Predicted vs Observed — Model vs GLORYS12
+              </h3>
+              <p className="text-xs text-white/40 mb-4">
+                Each point = one depth-level sample · dashed line = perfect 1:1 agreement · cluster near diagonal = high accuracy
+              </p>
+              <ResponsiveContainer width="100%" height={320}>
+                <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis type="number" domain={['auto','auto']}
+                  <XAxis type="number" dataKey="glorys" name="GLORYS12 (Observed)"
                     tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
-                    label={{ value:'Temp (°C)', fill:'rgba(255,255,255,0.3)', fontSize:9, position:'insideBottom', offset:-2 }} />
-                  <YAxis type="number" dataKey="depth" reversed
-                    tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false} width={45}
-                    label={{ value:'Depth (m)', fill:'rgba(255,255,255,0.3)', fontSize:9, angle:-90, position:'insideLeft' }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize:'11px', color:'rgba(255,255,255,0.5)' }} />
-                  <Line type="monotone" dataKey="Model"  stroke="#06b6d4" strokeWidth={2.5} dot={{ fill:'#06b6d4', r:3 }} name="DL Model (°C)" />
-                  <Line type="monotone" dataKey="GLORYS" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name="GLORYS12 (°C)" />
-                </LineChart>
+                    label={{ value:'GLORYS12 (Observed °C)', fill:'rgba(255,255,255,0.3)', fontSize:10, position:'insideBottom', offset:-5 }} />
+                  <YAxis type="number" dataKey="model" name="DL Model (Predicted)"
+                    tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false} width={42}
+                    label={{ value:'DL Model Predicted (°C)', fill:'rgba(255,255,255,0.3)', fontSize:10, angle:-90, position:'insideLeft' }} />
+                  <Tooltip cursor={{ fill:'rgba(255,255,255,0.04)' }} content={<CustomTooltip />} />
+                  {/* Perfect 1:1 line */}
+                  <ReferenceLine segment={[{x:2,y:2},{x:29,y:29}]} stroke="rgba(255,255,255,0.22)" strokeDasharray="5 3"
+                    label={{ value:'1:1', fill:'rgba(255,255,255,0.3)', fontSize:10 }} />
+                  <Scatter data={scatterData} name="Depth Samples" fill="#06b6d4" fillOpacity={0.65} />
+                </ScatterChart>
               </ResponsiveContainer>
+              <div className="flex flex-wrap gap-4 mt-3 text-xs text-white/40">
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-cyan-400/65 inline-block"/>DL Model prediction</span>
+                <span className="flex items-center gap-1.5"><span className="w-4 border-t-2 border-dashed border-white/25 inline-block"/>Perfect agreement (1:1)</span>
+                <span className="ml-auto">R² ≈ {overallCorr.toFixed(3)} · RMSE ≈ {overallRmse.toFixed(3)}°C</span>
+              </div>
             </div>
 
-            <div className="space-y-5">
-              {/* Difference profile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
-                <h3 className="font-semibold text-white mb-1">Bias Profile (Model − GLORYS)</h3>
-                <p className="text-xs text-white/40 mb-4">Positive = model warmer, Negative = model cooler</p>
-                <ResponsiveContainer width="100%" height={200}>
+                <h3 className="font-semibold text-white mb-1">Temperature Profile: Model vs GLORYS</h3>
+                <p className="text-xs text-white/40 mb-4">Latest observation · {latest?.location ?? '—'}</p>
+                <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={profileData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis type="number" tick={{ fill:'rgba(255,255,255,0.35)', fontSize:10 }} axisLine={false} tickLine={false} />
-                    <YAxis type="number" dataKey="depth" reversed tick={{ fill:'rgba(255,255,255,0.35)', fontSize:10 }} axisLine={false} tickLine={false} width={42} />
+                    <XAxis type="number" domain={['auto','auto']}
+                      tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false}
+                      label={{ value:'Temp (°C)', fill:'rgba(255,255,255,0.3)', fontSize:9, position:'insideBottom', offset:-2 }} />
+                    <YAxis type="number" dataKey="depth" reversed
+                      tick={{ fill:'rgba(255,255,255,0.4)', fontSize:10 }} axisLine={false} tickLine={false} width={45}
+                      label={{ value:'Depth (m)', fill:'rgba(255,255,255,0.3)', fontSize:9, angle:-90, position:'insideLeft' }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.25)" />
-                    <Line type="monotone" dataKey="diff" stroke="#8b5cf6" strokeWidth={2} dot={{ fill:'#8b5cf6', r:2 }} name="Bias (°C)" />
+                    <Legend wrapperStyle={{ fontSize:'11px', color:'rgba(255,255,255,0.5)' }} />
+                    <Line type="monotone" dataKey="Model"  stroke="#06b6d4" strokeWidth={2.5} dot={{ fill:'#06b6d4', r:3 }} name="DL Model (°C)" />
+                    <Line type="monotone" dataKey="GLORYS" stroke="#f97316" strokeWidth={2.5} strokeDasharray="6 3" dot={{ fill:'#f97316', r:3 }} name="GLORYS12 (°C)" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Overall radar */}
-              <div className="glass rounded-2xl p-5 border border-white/10 depth-shadow">
-                <h3 className="font-semibold text-white mb-3">Skill Radar</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                    <PolarAngleAxis dataKey="var" tick={{ fill:'rgba(255,255,255,0.5)', fontSize:10 }} />
-                    <Radar name="DL Model"  dataKey="model"  stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.15} strokeWidth={2} />
-                    <Radar name="GLORYS12" dataKey="glorys" stroke="#f97316" fill="#f97316" fillOpacity={0.1}  strokeWidth={1.5} />
-                    <Legend wrapperStyle={{ fontSize:'10px', color:'rgba(255,255,255,0.5)' }} />
-                  </RadarChart>
-                </ResponsiveContainer>
+              <div className="space-y-5">
+                {/* Difference profile */}
+                <div className="glass rounded-2xl p-6 border border-white/10 depth-shadow">
+                  <h3 className="font-semibold text-white mb-1">Bias Profile (Model − GLORYS)</h3>
+                  <p className="text-xs text-white/40 mb-4">Positive = model warmer, Negative = model cooler</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart data={profileData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis type="number" tick={{ fill:'rgba(255,255,255,0.35)', fontSize:10 }} axisLine={false} tickLine={false} />
+                      <YAxis type="number" dataKey="depth" reversed tick={{ fill:'rgba(255,255,255,0.35)', fontSize:10 }} axisLine={false} tickLine={false} width={42} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <ReferenceLine x={0} stroke="rgba(255,255,255,0.25)" />
+                      <Line type="monotone" dataKey="diff" stroke="#8b5cf6" strokeWidth={2} dot={{ fill:'#8b5cf6', r:2 }} name="Bias (°C)" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Overall radar */}
+                <div className="glass rounded-2xl p-5 border border-white/10 depth-shadow">
+                  <h3 className="font-semibold text-white mb-3">Skill Radar</h3>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                      <PolarAngleAxis dataKey="var" tick={{ fill:'rgba(255,255,255,0.5)', fontSize:10 }} />
+                      <Radar name="DL Model"  dataKey="model"  stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.15} strokeWidth={2} />
+                      <Radar name="GLORYS12" dataKey="glorys" stroke="#f97316" fill="#f97316" fillOpacity={0.1}  strokeWidth={1.5} />
+                      <Legend wrapperStyle={{ fontSize:'10px', color:'rgba(255,255,255,0.5)' }} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>

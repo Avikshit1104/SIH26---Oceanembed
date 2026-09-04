@@ -90,71 +90,108 @@ const DEPTH_ZONES = [
 
 // ── Full-height depth meter ────────────────────────────────────────────────────
 function DepthMeter({ depth }: { depth: number }) {
-  const pct     = Math.min((depth / 1000) * 100, 100);
-  const markers = [0, 100, 200, 300, 500, 700, 1000];
+  const pct = Math.min((depth / 1000) * 100, 100);
+  const markers = [
+    { m: 0,    label: '0', zone: 'Surface' },
+    { m: 100,  label: '100', zone: 'Thermo' },
+    { m: 300,  label: '300', zone: 'Meso' },
+    { m: 700,  label: '700', zone: 'Deep' },
+    { m: 1000, label: '1k', zone: 'Abyss' },
+  ];
 
   const depthColor =
-    depth < 30   ? '#ef4444' :
-    depth < 100  ? '#f97316' :
-    depth < 300  ? '#fbbf24' :
-    depth < 700  ? '#06b6d4' : '#3b82f6';
+    depth < 30  ? '#ef4444' :
+    depth < 100 ? '#f97316' :
+    depth < 300 ? '#fbbf24' :
+    depth < 700 ? '#06b6d4' : '#3b82f6';
 
   return (
-    <div className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col items-center py-0 w-14"
-      style={{ background: 'rgba(2,9,23,0.7)', backdropFilter: 'blur(12px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="fixed left-0 top-0 bottom-0 z-40 hidden lg:block" style={{ width: '44px' }}>
+      {/* Frosted glass backdrop */}
+      <div className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(180deg, rgba(2,9,23,0.92) 0%, rgba(4,18,44,0.95) 50%, rgba(2,9,23,0.92) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+        }} />
 
-      {/* Top label */}
-      <div className="pt-20 pb-2 text-[9px] text-white/30 uppercase tracking-widest writing-mode-vertical">
-        DEPTH
-      </div>
-
-      {/* Track — fills full remaining height */}
-      <div className="flex-1 relative w-2 bg-white/8 rounded-full mx-auto my-2 overflow-hidden">
-        {/* Coloured fill */}
-        <div
-          className="absolute top-0 left-0 right-0 rounded-full transition-all duration-500"
-          style={{
-            height: `${pct}%`,
-            background: 'linear-gradient(to bottom, #ef4444 0%, #f97316 20%, #fbbf24 40%, #06b6d4 65%, #3b82f6 82%, #7c3aed 100%)',
-          }}
-        />
-        {/* Animated glowing tip */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full -translate-y-1/2 transition-all duration-500"
-          style={{
-            top: `${pct}%`,
-            background: depthColor,
-            boxShadow: `0 0 10px 3px ${depthColor}aa`,
-          }}
-        />
-        {/* Tick marks */}
-        {markers.map(m => (
-          <div key={m}
-            className="absolute left-0 right-0 h-px"
-            style={{ top: `${(m / 1000) * 100}%`, background: 'rgba(255,255,255,0.15)' }}
-          />
-        ))}
-      </div>
-
-      {/* Depth readout */}
-      <div className="pb-6 flex flex-col items-center gap-1">
-        <div
-          className="rounded-lg px-1.5 py-1 text-center min-w-[44px] border transition-all duration-500"
-          style={{ borderColor: depthColor + '50', background: depthColor + '18' }}>
-          <span className="text-xs font-black font-mono block" style={{ color: depthColor }}>
-            {Math.round(depth)}
+      <div className="relative h-full flex flex-col items-center">
+        {/* DEPTH label */}
+        <div className="pt-[72px] pb-4">
+          <span className="text-[8px] font-bold tracking-[0.3em] uppercase text-white/20"
+            style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }}>
+            DEPTH
           </span>
-          <span className="text-[8px] text-white/30">m</span>
         </div>
-        {/* Marker labels */}
-        <div className="flex flex-col gap-0.5 mt-2">
-          {markers.map(m => (
-            <span key={m}
-              className="text-[8px] font-mono transition-all duration-300"
-              style={{ color: Math.abs(m - depth) < 60 ? depthColor : 'rgba(255,255,255,0.2)' }}>
-              {m}
+
+        {/* Track */}
+        <div className="relative flex-1 mb-4" style={{ width: '3px' }}>
+          {/* Empty track */}
+          <div className="absolute inset-0 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
+
+          {/* Filled gradient */}
+          <div className="absolute top-0 left-0 right-0 rounded-full transition-all duration-700"
+            style={{
+              height: `${pct}%`,
+              background: 'linear-gradient(to bottom,#ef4444 0%,#f97316 22%,#fbbf24 42%,#06b6d4 68%,#3b82f6 85%,#7c3aed 100%)',
+              boxShadow: `0 0 6px 1px ${depthColor}77`,
+            }} />
+
+          {/* Glowing orb tip */}
+          <div className="absolute left-1/2 rounded-full transition-all duration-700"
+            style={{
+              width: '11px', height: '11px',
+              top: `calc(${pct}% - 5px)`,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: `radial-gradient(circle at 35% 35%, #fff, ${depthColor})`,
+              boxShadow: `0 0 14px 5px ${depthColor}88, 0 0 4px 1px #fff4`,
+            }} />
+
+          {/* Tick marks + labels */}
+          {markers.map(({ m, label }) => {
+            const tp   = (m / 1000) * 100;
+            const near = Math.abs(m - depth) < 90;
+            return (
+              <div key={m} className="absolute" style={{ top: `${tp}%`, left: '50%' }}>
+                {/* Tick extending right */}
+                <div className="absolute h-px transition-all duration-300"
+                  style={{
+                    left: '6px', width: near ? '10px' : '6px',
+                    top: '0px',
+                    background: near ? depthColor : 'rgba(255,255,255,0.12)',
+                    boxShadow: near ? `0 0 5px ${depthColor}` : 'none',
+                  }} />
+                {/* Label */}
+                <span className="absolute text-[8px] font-mono transition-all duration-300"
+                  style={{
+                    left: '18px', top: '-5px',
+                    color: near ? depthColor : 'rgba(255,255,255,0.14)',
+                    fontWeight: near ? 800 : 400,
+                    textShadow: near ? `0 0 8px ${depthColor}` : 'none',
+                  }}>
+                  {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Current depth badge */}
+        <div className="pb-6 flex flex-col items-center gap-0.5">
+          <div className="rounded-lg px-1.5 py-1.5 text-center transition-all duration-500"
+            style={{
+              background: `${depthColor}15`,
+              border: `1px solid ${depthColor}35`,
+              minWidth: '36px',
+              boxShadow: `0 0 12px ${depthColor}33`,
+            }}>
+            <span className="text-[11px] font-black font-mono leading-tight block transition-all duration-500"
+              style={{ color: depthColor, textShadow: `0 0 8px ${depthColor}` }}>
+              {Math.round(depth)}
             </span>
-          ))}
+            <span className="text-[7px] text-white/20 font-mono">m</span>
+          </div>
         </div>
       </div>
     </div>
@@ -252,7 +289,7 @@ export default function HomePage() {
       <DepthMeter depth={scrollDepth} />
 
       {/* All content shifted right to clear the depth meter */}
-      <div className="lg:pl-14">
+      <div className="lg:pl-11">
 
         {/* ── HERO ── */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
