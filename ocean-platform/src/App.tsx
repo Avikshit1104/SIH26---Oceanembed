@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { WaterCursorTrail, BubbleClickEffect } from './components/WaterEffects';
 
 // Eagerly loaded
 import HomePage from './pages/HomePage';
@@ -36,6 +37,8 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
+      <WaterCursorTrail />
+      <BubbleClickEffect />
       <AuthProvider>
         <DataProvider>
           <Suspense fallback={<PageLoader />}>

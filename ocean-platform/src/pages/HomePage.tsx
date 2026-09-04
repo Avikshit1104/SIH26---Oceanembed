@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Waves, MessageSquare, LayoutDashboard, Globe, Wind,
@@ -9,152 +9,223 @@ import {
 import Navbar from '../components/Navbar';
 import { DEPTH_LEVELS } from '../contexts/DataContext';
 
-// ── Depth zones with content ──────────────────────────────────────────────────
+// ── Depth zones ────────────────────────────────────────────────────────────────
 const DEPTH_ZONES = [
   {
-    id:    'surface',
-    depth: 0,
-    label: 'Surface (0 m)',
-    color: '#ef4444',
-    bg:    'from-red-900/20 to-transparent',
-    border:'border-red-500/20',
-    icon:  Waves,
+    id: 'surface', depth: 0,
+    label: 'Surface (0 m)', color: '#ef4444',
+    bg: 'from-red-950/40 via-[#020917] to-[#020917]',
+    icon: Waves,
     title: 'Sea Surface — Where Satellites Watch',
-    desc:  'The ocean surface is our window into the deep. Satellites measure sea surface temperature (SST), salinity (SSS), height (SSH), and currents every day at 0.25° resolution across the entire North Indian Ocean.',
+    desc: 'The ocean surface is our window into the deep. Satellites measure SST, SSS, SSH and currents every day at 0.25° resolution across the entire North Indian Ocean.',
     facts: [
-      { label:'SST Range',     value:'24°C – 32°C', icon: Thermometer },
-      { label:'Satellite Obs', value:'8 per day',    icon: Eye },
-      { label:'Resolution',    value:'0.25° × 0.25°', icon: Navigation },
-      { label:'Sources',       value:'MODIS · VIIRS · AVHRR', icon: Globe },
+      { label: 'SST Range',     value: '24°C – 32°C',        icon: Thermometer },
+      { label: 'Satellite Obs', value: '8 per day',           icon: Eye },
+      { label: 'Resolution',    value: '0.25° × 0.25°',       icon: Navigation },
+      { label: 'Sources',       value: 'MODIS · VIIRS · AVHRR', icon: Globe },
     ],
-    feature: { label:'Surface Obs', to:'/surface', desc:'View live SST, SSS, SSH heatmaps' },
+    feature: { label: 'Surface Obs', to: '/surface', desc: 'View live SST, SSS, SSH heatmaps' },
   },
   {
-    id:    'mixedlayer',
-    depth: 30,
-    label: 'Mixed Layer (30 m)',
-    color: '#f97316',
-    bg:    'from-orange-900/20 to-transparent',
-    border:'border-orange-500/20',
-    icon:  Layers,
+    id: 'mixed', depth: 30,
+    label: 'Mixed Layer (30 m)', color: '#f97316',
+    bg: 'from-orange-950/40 via-[#020917] to-[#020917]',
+    icon: Layers,
     title: 'Mixed Layer — Wind-Driven Uniformity',
-    desc:  'Wind-driven turbulence keeps the upper 20–80m nearly uniform in temperature. The Mixed Layer Depth (MLD) determines how much thermal energy is available to fuel tropical cyclones — a deeper MLD means more heat reservoir.',
+    desc: 'Wind-driven turbulence keeps the upper 20–80 m nearly uniform in temperature. MLD determines how much thermal energy is available to fuel tropical cyclones.',
     facts: [
-      { label:'Typical MLD',    value:'30 – 80 m',    icon: TrendingDown },
-      { label:'Effect',         value:'Cyclone fuel',  icon: Wind },
-      { label:'Driver',         value:'Wind stress',   icon: Wind },
-      { label:'Season',         value:'Deeper in winter', icon: Calendar },
+      { label: 'Typical MLD', value: '30 – 80 m',      icon: TrendingDown },
+      { label: 'Effect',      value: 'Cyclone fuel',    icon: Wind },
+      { label: 'Driver',      value: 'Wind stress',     icon: Wind },
+      { label: 'Season',      value: 'Deeper in winter', icon: Calendar },
     ],
-    feature: { label:'7-Day Forecast', to:'/forecast', desc:'Predict MLD evolution over next week' },
+    feature: { label: '7-Day Forecast', to: '/forecast', desc: 'Predict MLD evolution over next week' },
   },
   {
-    id:    'thermocline',
-    depth: 100,
-    label: 'Thermocline (75–200 m)',
-    color: '#fbbf24',
-    bg:    'from-yellow-900/20 to-transparent',
-    border:'border-yellow-500/20',
-    icon:  TrendingDown,
+    id: 'thermocline', depth: 100,
+    label: 'Thermocline (75–200 m)', color: '#fbbf24',
+    bg: 'from-yellow-950/30 via-[#020917] to-[#020917]',
+    icon: TrendingDown,
     title: 'Thermocline — The Great Divider',
-    desc:  'Below the mixed layer, temperature drops sharply — 10–15°C within just 100m. This layer, the thermocline, acts as a barrier between warm surface waters and cold deep ocean. SSH anomalies from eddies displace it up or down.',
+    desc: 'Temperature drops sharply — 10–15°C within just 100 m. SSH anomalies from mesoscale eddies displace this layer up or down, directly controlling Ocean Heat Content.',
     facts: [
-      { label:'Temp Drop',    value:'~15°C per 100m', icon: Thermometer },
-      { label:'Depth',        value:'75 – 200 m',     icon: Layers },
-      { label:'SSH Link',     value:'Eddy coupling',  icon: Waves },
-      { label:'OHC Driver',   value:'Critical zone',  icon: Zap },
+      { label: 'Temp Drop',  value: '~15°C per 100 m', icon: Thermometer },
+      { label: 'Depth',      value: '75 – 200 m',      icon: Layers },
+      { label: 'SSH Link',   value: 'Eddy coupling',   icon: Waves },
+      { label: 'OHC Driver', value: 'Critical zone',   icon: Zap },
     ],
-    feature: { label:'3D Profile View', to:'/map', desc:'Visualise thermocline in 3D depth slabs' },
+    feature: { label: '3D Profile View', to: '/map', desc: 'Visualise thermocline in 3D depth slabs' },
   },
   {
-    id:    'mesopelagic',
-    depth: 300,
-    label: 'Mesopelagic (200–1000 m)',
-    color: '#06b6d4',
-    bg:    'from-cyan-900/20 to-transparent',
-    border:'border-cyan-500/20',
-    icon:  Fish,
+    id: 'meso', depth: 300,
+    label: 'Mesopelagic (200–1000 m)', color: '#06b6d4',
+    bg: 'from-cyan-950/30 via-[#020917] to-[#020917]',
+    icon: Fish,
     title: 'Twilight Zone — Life Without Light',
-    desc:  'From 200m to 1000m, sunlight barely penetrates. Temperature stabilises between 5–15°C. This zone hosts the largest animal migration on Earth — the diel vertical migration — as creatures rise at night to feed at the surface.',
+    desc: 'From 200 m to 1000 m, sunlight barely penetrates. Temperature stabilises at 5–15°C. The largest animal migration on Earth happens here nightly.',
     facts: [
-      { label:'Temp Range', value:'5°C – 15°C',       icon: Thermometer },
-      { label:'Light',      value:'< 1% of surface',  icon: Eye },
-      { label:'Biomass',    value:'Highest density',   icon: Activity },
-      { label:'Key depths', value:'200 · 300 · 500m',  icon: Layers },
+      { label: 'Temp Range', value: '5°C – 15°C',      icon: Thermometer },
+      { label: 'Light',      value: '< 1% of surface', icon: Eye },
+      { label: 'Biomass',    value: 'Highest density', icon: Activity },
+      { label: 'Key depths', value: '200 · 300 · 500m', icon: Layers },
     ],
-    feature: { label:'Input Data', to:'/input', desc:'Upload .nc files for reconstruction' },
+    feature: { label: 'Input Data', to: '/input', desc: 'Upload .nc files for reconstruction' },
   },
   {
-    id:    'deep',
-    depth: 700,
-    label: 'Deep Ocean (700–1000 m)',
-    color: '#3b82f6',
-    bg:    'from-blue-900/25 to-transparent',
-    border:'border-blue-500/20',
-    icon:  Anchor,
+    id: 'deep', depth: 700,
+    label: 'Deep Ocean (700–1000 m)', color: '#3b82f6',
+    bg: 'from-blue-950/40 via-[#020917] to-[#020917]',
+    icon: Anchor,
     title: 'The Deep — Cold, Dark, Stable',
-    desc:  'Below 700m the ocean is near-freezing, pitch black, and under enormous pressure. Temperature changes are measured in fractions of a degree. These waters hold vast climate memory — changes here take decades to reach the surface.',
+    desc: 'Near-freezing, pitch black, enormous pressure. Temperature changes are fractions of a degree. These waters hold centuries of climate memory.',
     facts: [
-      { label:'Temp',     value:'2°C – 6°C',        icon: Thermometer },
-      { label:'Pressure', value:'>70 atm',           icon: Waves },
-      { label:'Timescale',value:'Centuries',         icon: Calendar },
-      { label:'ARGO',     value:'Floats to 2000m',   icon: Database },
+      { label: 'Temp',      value: '2°C – 6°C',      icon: Thermometer },
+      { label: 'Pressure',  value: '> 70 atm',        icon: Waves },
+      { label: 'Timescale', value: 'Centuries',        icon: Calendar },
+      { label: 'ARGO',      value: 'Floats to 2000 m', icon: Database },
     ],
-    feature: { label:'Model vs GLORYS', to:'/compare', desc:'Compare DL model vs reanalysis data' },
+    feature: { label: 'Model vs GLORYS', to: '/compare', desc: 'Compare DL model vs reanalysis' },
   },
 ];
 
-// ── Depth meter sidebar ────────────────────────────────────────────────────────
-function DepthMeter({ depth, maxDepth }: { depth: number; maxDepth: number }) {
-  const pct = Math.min((depth / maxDepth) * 100, 100);
+// ── Full-height depth meter ────────────────────────────────────────────────────
+function DepthMeter({ depth }: { depth: number }) {
+  const pct     = Math.min((depth / 1000) * 100, 100);
   const markers = [0, 100, 200, 300, 500, 700, 1000];
 
-  return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-1"
-      style={{ height: '320px' }}>
-      {/* Label */}
-      <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1 rotate-0">Depth</div>
+  const depthColor =
+    depth < 30   ? '#ef4444' :
+    depth < 100  ? '#f97316' :
+    depth < 300  ? '#fbbf24' :
+    depth < 700  ? '#06b6d4' : '#3b82f6';
 
-      {/* Track */}
-      <div className="relative flex-1 w-1 bg-white/10 rounded-full overflow-hidden">
-        {/* Fill */}
+  return (
+    <div className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col items-center py-0 w-14"
+      style={{ background: 'rgba(2,9,23,0.7)', backdropFilter: 'blur(12px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+
+      {/* Top label */}
+      <div className="pt-20 pb-2 text-[9px] text-white/30 uppercase tracking-widest writing-mode-vertical">
+        DEPTH
+      </div>
+
+      {/* Track — fills full remaining height */}
+      <div className="flex-1 relative w-2 bg-white/8 rounded-full mx-auto my-2 overflow-hidden">
+        {/* Coloured fill */}
         <div
-          className="absolute top-0 left-0 right-0 rounded-full transition-all duration-700"
+          className="absolute top-0 left-0 right-0 rounded-full transition-all duration-500"
           style={{
             height: `${pct}%`,
-            background: `linear-gradient(to bottom, #ef4444, #f97316, #fbbf24, #06b6d4, #3b82f6, #7c3aed)`,
+            background: 'linear-gradient(to bottom, #ef4444 0%, #f97316 20%, #fbbf24 40%, #06b6d4 65%, #3b82f6 82%, #7c3aed 100%)',
           }}
         />
-        {/* Marker ticks */}
+        {/* Animated glowing tip */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full -translate-y-1/2 transition-all duration-500"
+          style={{
+            top: `${pct}%`,
+            background: depthColor,
+            boxShadow: `0 0 10px 3px ${depthColor}aa`,
+          }}
+        />
+        {/* Tick marks */}
         {markers.map(m => (
           <div key={m}
-            className="absolute left-1/2 w-3 h-px -translate-x-1/2 bg-white/20"
-            style={{ top: `${(m / maxDepth) * 100}%` }}
+            className="absolute left-0 right-0 h-px"
+            style={{ top: `${(m / 1000) * 100}%`, background: 'rgba(255,255,255,0.15)' }}
           />
         ))}
       </div>
 
-      {/* Current depth label */}
-      <div className="mt-1 glass rounded-lg px-2 py-1 border border-white/15 text-center min-w-[52px]">
-        <span className="text-xs font-bold font-mono" style={{
-          color: depth < 50 ? '#ef4444' : depth < 200 ? '#fbbf24' : depth < 500 ? '#06b6d4' : '#3b82f6'
-        }}>
-          {Math.round(depth)}m
-        </span>
+      {/* Depth readout */}
+      <div className="pb-6 flex flex-col items-center gap-1">
+        <div
+          className="rounded-lg px-1.5 py-1 text-center min-w-[44px] border transition-all duration-500"
+          style={{ borderColor: depthColor + '50', background: depthColor + '18' }}>
+          <span className="text-xs font-black font-mono block" style={{ color: depthColor }}>
+            {Math.round(depth)}
+          </span>
+          <span className="text-[8px] text-white/30">m</span>
+        </div>
+        {/* Marker labels */}
+        <div className="flex flex-col gap-0.5 mt-2">
+          {markers.map(m => (
+            <span key={m}
+              className="text-[8px] font-mono transition-all duration-300"
+              style={{ color: Math.abs(m - depth) < 60 ? depthColor : 'rgba(255,255,255,0.2)' }}>
+              {m}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Animated number ───────────────────────────────────────────────────────────
+// ── Glass prism panel (macOS Tahoe-inspired) ──────────────────────────────────
+function PrismCard({ children, className = '', glowColor = '#06b6d4' }: {
+  children: React.ReactNode;
+  className?: string;
+  glowColor?: string;
+}) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl ${className}`}
+      style={{
+        background: `
+          linear-gradient(135deg,
+            rgba(255,255,255,0.10) 0%,
+            rgba(255,255,255,0.04) 40%,
+            rgba(255,255,255,0.08) 100%)
+        `,
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        border: '1px solid rgba(255,255,255,0.14)',
+        boxShadow: `
+          0 0 0 1px rgba(255,255,255,0.06) inset,
+          0 1px 0 rgba(255,255,255,0.18) inset,
+          0 -1px 0 rgba(0,0,0,0.2) inset,
+          0 8px 40px rgba(0,0,0,0.4),
+          0 0 60px ${glowColor}22
+        `,
+      }}
+    >
+      {/* Rainbow specular streak — the prism effect */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: '-40%', left: '-20%',
+          width: '60%', height: '180%',
+          background: `linear-gradient(
+            105deg,
+            transparent 30%,
+            rgba(255,120,120,0.06) 38%,
+            rgba(255,200,80,0.07)  42%,
+            rgba(120,255,180,0.07) 46%,
+            rgba(80,180,255,0.08)  50%,
+            rgba(160,80,255,0.06)  54%,
+            transparent 62%
+          )`,
+          transform: 'rotate(-15deg)',
+        }}
+      />
+      {/* Top edge highlight */}
+      <div className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)' }} />
+      {children}
+    </div>
+  );
+}
+
+// ── Animated stat counter ─────────────────────────────────────────────────────
 function AnimNum({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    let start = 0;
+    let v = 0;
     const step = target / 60;
     const t = setInterval(() => {
-      start += step;
-      if (start >= target) { setVal(target); clearInterval(t); }
-      else setVal(Math.floor(start));
+      v += step;
+      if (v >= target) { setVal(target); clearInterval(t); }
+      else setVal(Math.floor(v));
     }, 16);
     return () => clearInterval(t);
   }, [target]);
@@ -163,303 +234,288 @@ function AnimNum({ target, suffix = '' }: { target: number; suffix?: string }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const navigate    = useNavigate();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const [scrollDepth, setScrollDepth] = useState(0);
-  const maxDepth = 1000;
 
-  // Track scroll → map to 0–1000m
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
     const onScroll = () => {
-      const scrollTop  = window.scrollY;
-      const docHeight  = document.body.scrollHeight - window.innerHeight;
-      const pct        = docHeight > 0 ? scrollTop / docHeight : 0;
-      setScrollDepth(Math.round(pct * maxDepth));
+      const docH = document.body.scrollHeight - window.innerHeight;
+      setScrollDepth(docH > 0 ? Math.round((window.scrollY / docH) * 1000) : 0);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#020917]" ref={containerRef}>
+    <div className="min-h-screen bg-[#020917]">
       <Navbar />
+      <DepthMeter depth={scrollDepth} />
 
-      {/* Depth meter */}
-      <DepthMeter depth={scrollDepth} maxDepth={maxDepth} />
+      {/* All content shifted right to clear the depth meter */}
+      <div className="lg:pl-14">
 
-      {/* ── HERO — 0m ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020917] via-[#041530] to-[#020c22]" />
-          <div className="absolute inset-0"
-            style={{ backgroundImage:'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6,182,212,0.15), transparent)' }} />
-          {/* Animated wave lines */}
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="absolute left-0 right-0 h-px opacity-10"
-              style={{
-                top: `${30 + i * 12}%`,
-                background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
-                animation: `shimmer ${3 + i * 0.5}s linear ${i * 0.3}s infinite`,
-              }} />
-          ))}
-        </div>
-
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-          {/* Depth badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-cyan-500/30 text-cyan-400 text-sm mb-8">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            0 m · Sea Surface · Real-time monitoring active
-          </div>
-
-          <h1 className="text-5xl sm:text-7xl font-black mb-6 leading-tight tracking-tight">
-            <span style={{ background:'linear-gradient(135deg,#06b6d4,#3b82f6,#8b5cf6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-              Ocean &amp; Climate
-            </span>
-            <br />
-            <span className="text-white">Intelligence Platform</span>
-          </h1>
-
-          <p className="text-white/50 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Reconstructing the <span className="text-cyan-400">subsurface ocean</span> from satellite observations using deep learning embeddings — 15 depth levels, 0 to 1000m, across the North Indian Ocean.
-          </p>
-
-          <div className="flex flex-wrap gap-4 justify-center mb-16">
-            <button onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold glow-cyan hover:opacity-90 transition-opacity"
-              style={{ background:'linear-gradient(135deg,#06b6d4,#3b82f6)' }}>
-              Open Dashboard <ArrowRight size={16} />
-            </button>
-            <button onClick={() => navigate('/forecast')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl glass border border-white/15 text-white font-semibold hover:bg-white/10 transition-all">
-              <Calendar size={16} className="text-cyan-400" />
-              7-Day Forecast
-            </button>
-            <button onClick={() => navigate('/chat')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl glass border border-white/15 text-white font-semibold hover:bg-white/10 transition-all">
-              <MessageSquare size={16} className="text-purple-400" />
-              Ask X AI
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-            {[
-              { label:'Depth Levels', value:15, suffix:'' },
-              { label:'Max Depth',    value:1000, suffix:'m' },
-              { label:'Grid Points',  value:40000, suffix:'+' },
-              { label:'Accuracy',     value:94, suffix:'%' },
-            ].map(({ label, value, suffix }) => (
-              <div key={label} className="glass rounded-2xl p-4 border border-white/10 text-center">
-                <p className="text-2xl font-black"
-                  style={{ background:'linear-gradient(90deg,#06b6d4,#3b82f6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-                  <AnimNum target={value} suffix={suffix} />
-                </p>
-                <p className="text-white/40 text-xs mt-1">{label}</p>
-              </div>
+        {/* ── HERO ── */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+          {/* Background layers */}
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020917] via-[#041530] to-[#020c22]" />
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(6,182,212,0.18), transparent)' }} />
+            {/* Subtle bioluminescence flickers */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="absolute rounded-full"
+                style={{
+                  width:  `${2 + Math.random() * 3}px`,
+                  height: `${2 + Math.random() * 3}px`,
+                  left:   `${10 + i * 11}%`,
+                  top:    `${20 + (i % 3) * 25}%`,
+                  background: '#06b6d4',
+                  animation: `pulse ${2 + i * 0.4}s ease-in-out ${i * 0.3}s infinite`,
+                  opacity: 0.4,
+                }} />
             ))}
           </div>
 
-          {/* Scroll hint */}
-          <div className="mt-16 flex flex-col items-center gap-2 text-white/25 text-xs">
-            <span>Scroll to dive deeper</span>
-            <div className="w-px h-8 bg-gradient-to-b from-white/25 to-transparent" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── DEPTH ZONES ── */}
-      {DEPTH_ZONES.map((zone, zi) => {
-        const Icon = zone.icon;
-        return (
-          <section key={zone.id}
-            className={`relative min-h-screen flex items-center py-24 overflow-hidden`}>
-            {/* Depth-coloured BG gradient */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className={`absolute inset-0 bg-gradient-to-br ${zone.bg}`} />
-              {/* Depth pressure lines */}
-              {[...Array(4)].map((_, i) => (
-                <div key={i}
-                  className="absolute left-0 right-0 h-px"
-                  style={{
-                    top:`${20 + i * 20}%`,
-                    background: `linear-gradient(90deg, transparent 10%, ${zone.color}18, transparent 90%)`,
-                  }} />
-              ))}
-              {/* Depth badge (left-centre) */}
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 hidden xl:block">
-                <div className="glass rounded-2xl px-4 py-6 border text-center w-20"
-                  style={{ borderColor: zone.color + '40' }}>
-                  <span className="text-xs text-white/30 block mb-1">depth</span>
-                  <span className="text-2xl font-black block" style={{ color: zone.color }}>
-                    {zone.depth}
-                  </span>
-                  <span className="text-xs text-white/40">m</span>
-                </div>
-              </div>
+          <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-10"
+              style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', color: '#06b6d4' }}>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              0 m · Sea Surface · Real-time monitoring active
             </div>
 
-            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 w-full">
-              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${zi % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
+            <h1 className="text-5xl sm:text-7xl font-black mb-6 leading-tight tracking-tight">
+              <span style={{ background: 'linear-gradient(135deg,#06b6d4 0%,#3b82f6 50%,#8b5cf6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Ocean &amp; Climate
+              </span>
+              <br />
+              <span className="text-white">Intelligence Platform</span>
+            </h1>
 
-                {/* Text side */}
-                <div className={zi % 2 === 1 ? 'lg:order-2' : ''}>
-                  {/* Depth pill */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border text-sm mb-5"
-                    style={{ borderColor: zone.color + '50', color: zone.color }}>
-                    <Icon size={13} />
-                    {zone.label}
-                  </div>
+            <p className="text-white/50 text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
+              Reconstructing the{' '}
+              <span className="text-cyan-400 font-semibold">subsurface ocean</span>{' '}
+              from satellite observations using deep learning embeddings —{' '}
+              15 depth levels, 0 to 1000 m, across the North Indian Ocean.
+            </p>
 
-                  <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 leading-tight">
-                    {zone.title}
-                  </h2>
-                  <p className="text-white/55 text-base leading-relaxed mb-8">
-                    {zone.desc}
+            {/* CTA buttons */}
+            <div className="flex flex-wrap gap-4 justify-center mb-16">
+              <button onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm hover:opacity-90 transition-all hover:scale-105"
+                style={{ background: 'linear-gradient(135deg,#06b6d4,#3b82f6)', boxShadow: '0 0 30px rgba(6,182,212,0.35)' }}>
+                Open Dashboard <ArrowRight size={16} />
+              </button>
+              <button onClick={() => navigate('/forecast')}
+                className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-white hover:scale-105 transition-all"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)' }}>
+                <Calendar size={16} className="text-cyan-400" />
+                7-Day Forecast
+              </button>
+              <button onClick={() => navigate('/chat')}
+                className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-white hover:scale-105 transition-all"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)' }}>
+                <MessageSquare size={16} className="text-purple-400" />
+                Ask X AI
+              </button>
+            </div>
+
+            {/* Stats — prism cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+              {[
+                { label: 'Depth Levels', value: 15,    suffix: '',  glow: '#06b6d4' },
+                { label: 'Max Depth',    value: 1000,  suffix: 'm', glow: '#3b82f6' },
+                { label: 'Grid Points',  value: 40000, suffix: '+', glow: '#8b5cf6' },
+                { label: 'Accuracy',     value: 94,    suffix: '%', glow: '#10b981' },
+              ].map(({ label, value, suffix, glow }) => (
+                <PrismCard key={label} glowColor={glow} className="p-4 text-center">
+                  <p className="text-2xl font-black"
+                    style={{ background: `linear-gradient(135deg,${glow},#fff)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    <AnimNum target={value} suffix={suffix} />
                   </p>
+                  <p className="text-white/40 text-xs mt-1">{label}</p>
+                </PrismCard>
+              ))}
+            </div>
 
-                  {/* Facts grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-8">
-                    {zone.facts.map(({ label, value, icon: FIcon }) => (
-                      <div key={label} className="glass rounded-xl p-4 border border-white/10 flex items-start gap-3">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                          style={{ background: zone.color + '20', border: `1px solid ${zone.color}40` }}>
-                          <FIcon size={13} style={{ color: zone.color }} />
-                        </div>
-                        <div>
-                          <p className="text-xs text-white/40">{label}</p>
-                          <p className="text-sm font-semibold text-white mt-0.5">{value}</p>
-                        </div>
-                      </div>
-                    ))}
+            <div className="mt-16 flex flex-col items-center gap-2 text-white/20 text-xs animate-bounce">
+              <span>Scroll to dive deeper</span>
+              <div className="w-px h-8 bg-gradient-to-b from-white/20 to-transparent" />
+            </div>
+          </div>
+        </section>
+
+        {/* ── DEPTH ZONE SECTIONS ── */}
+        {DEPTH_ZONES.map((zone, zi) => {
+          const Icon = zone.icon;
+          return (
+            <section key={zone.id} className={`relative min-h-screen flex items-center py-24 overflow-hidden bg-gradient-to-b ${zone.bg}`}>
+
+              {/* Horizontal pressure lines */}
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="absolute left-0 right-0 h-px pointer-events-none"
+                  style={{ top: `${15 + i * 17}%`, background: `linear-gradient(90deg, transparent 5%, ${zone.color}20, transparent 95%)` }} />
+              ))}
+
+              <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
+                <div className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center`}>
+
+                  {/* Text — alternates sides */}
+                  <div className={zi % 2 === 1 ? 'lg:order-2' : ''}>
+                    {/* Zone pill */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm mb-6"
+                      style={{ background: zone.color + '20', border: `1px solid ${zone.color}50`, color: zone.color }}>
+                      <Icon size={13} />
+                      {zone.label}
+                    </div>
+
+                    <h2 className="text-3xl sm:text-4xl font-black text-white mb-5 leading-tight">
+                      {zone.title}
+                    </h2>
+                    <p className="text-white/55 text-base leading-relaxed mb-8">{zone.desc}</p>
+
+                    {/* Fact cards — prism style */}
+                    <div className="grid grid-cols-2 gap-3 mb-8">
+                      {zone.facts.map(({ label, value, icon: FIcon }) => (
+                        <PrismCard key={label} glowColor={zone.color} className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: zone.color + '25', border: `1px solid ${zone.color}45` }}>
+                              <FIcon size={13} style={{ color: zone.color }} />
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-white/40 uppercase tracking-wider">{label}</p>
+                              <p className="text-sm font-semibold text-white mt-0.5">{value}</p>
+                            </div>
+                          </div>
+                        </PrismCard>
+                      ))}
+                    </div>
+
+                    {/* CTA */}
+                    <button onClick={() => navigate(zone.feature.to)}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white hover:opacity-90 hover:scale-105 transition-all"
+                      style={{ background: `linear-gradient(135deg, ${zone.color}dd, ${zone.color}88)`, boxShadow: `0 0 20px ${zone.color}44` }}>
+                      <ArrowRight size={14} />
+                      {zone.feature.label}
+                    </button>
+                    <p className="text-white/25 text-xs mt-2">{zone.feature.desc}</p>
                   </div>
 
-                  {/* CTA */}
-                  <button onClick={() => navigate(zone.feature.to)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white hover:opacity-90 transition-all"
-                    style={{ background: `linear-gradient(135deg, ${zone.color}cc, ${zone.color}88)` }}>
-                    <ArrowRight size={14} />
-                    {zone.feature.label}
-                  </button>
-                  <p className="text-white/30 text-xs mt-2">{zone.feature.desc}</p>
-                </div>
-
-                {/* Visual side — depth profile column */}
-                <div className={`${zi % 2 === 1 ? 'lg:order-1' : ''} flex items-center justify-center`}>
-                  <div className="relative">
-                    {/* Giant depth column */}
-                    <div className="flex gap-1 items-end" style={{ height: '360px' }}>
-                      {/* DEPTH_LEVELS column */}
-                      <div className="flex flex-col-reverse w-12 rounded-2xl overflow-hidden border border-white/10"
-                        style={{ height: '360px' }}>
+                  {/* Visual — depth column */}
+                  <div className={`${zi % 2 === 1 ? 'lg:order-1' : ''} flex items-center justify-center`}>
+                    <div className="relative flex gap-4">
+                      {/* Depth slab column */}
+                      <div className="flex flex-col-reverse rounded-2xl overflow-hidden border border-white/10"
+                        style={{ width: '56px', height: '380px', boxShadow: `0 0 40px ${zone.color}30` }}>
                         {DEPTH_LEVELS.map((d) => {
                           const isActive = d >= zone.depth && d < (DEPTH_ZONES[zi + 1]?.depth ?? 1001);
-                          // temp decreases with depth
                           const temp = 28 - (d / 1000) * 26;
                           const n = Math.max(0, Math.min(1, (temp - 2) / 27));
-                          let bg: string;
-                          if (n < 0.25) bg = '#1e40af';
-                          else if (n < 0.5) bg = '#06b6d4';
-                          else if (n < 0.75) bg = '#fbbf24';
-                          else bg = '#ef4444';
+                          const bg = n < 0.25 ? '#1e40af' : n < 0.5 ? '#06b6d4' : n < 0.75 ? '#fbbf24' : '#ef4444';
                           return (
-                            <div key={d}
-                              title={`${d}m · ${temp.toFixed(1)}°C`}
-                              className={`flex-1 transition-all duration-300 ${isActive ? 'opacity-100 brightness-125' : 'opacity-40'}`}
-                              style={{ background: bg }}
-                            />
+                            <div key={d} title={`${d}m · ${temp.toFixed(1)}°C`}
+                              className="flex-1 transition-all duration-300"
+                              style={{
+                                background: bg,
+                                opacity: isActive ? 1 : 0.3,
+                                filter: isActive ? `brightness(1.3) drop-shadow(0 0 4px ${bg})` : 'none',
+                              }} />
                           );
                         })}
                       </div>
 
                       {/* Depth labels */}
-                      <div className="flex flex-col-reverse justify-between pl-3 text-[10px] text-white/30"
-                        style={{ height: '360px' }}>
-                        {DEPTH_LEVELS.filter((_, i) => i % 2 === 0).map(d => (
-                          <span key={d} className={d >= zone.depth && d < (DEPTH_ZONES[zi+1]?.depth ?? 1001) ? 'text-white/70' : ''}>
-                            {d}m
-                          </span>
-                        ))}
+                      <div className="flex flex-col-reverse justify-between py-0.5"
+                        style={{ height: '380px' }}>
+                        {DEPTH_LEVELS.filter((_, i) => i % 2 === 0).map(d => {
+                          const isActive = d >= zone.depth && d < (DEPTH_ZONES[zi + 1]?.depth ?? 1001);
+                          return (
+                            <span key={d}
+                              className="text-[10px] font-mono transition-all duration-300"
+                              style={{ color: isActive ? zone.color : 'rgba(255,255,255,0.2)', fontWeight: isActive ? 700 : 400 }}>
+                              {d}m
+                            </span>
+                          );
+                        })}
                       </div>
-                    </div>
 
-                    {/* Active zone label */}
-                    <div className="absolute -right-4 top-1/2 -translate-y-1/2 glass rounded-xl px-3 py-2 border text-xs"
-                      style={{ borderColor: zone.color + '50', color: zone.color }}>
-                      ← Active zone
-                    </div>
-
-                    {/* Temp legend */}
-                    <div className="mt-3 w-48 mx-auto">
-                      <div className="h-2 rounded-full" style={{ background:'linear-gradient(to right,#1e40af,#06b6d4,#fbbf24,#ef4444)' }} />
-                      <div className="flex justify-between text-[9px] text-white/25 mt-1">
-                        <span>2°C</span><span>10°C</span><span>20°C</span><span>29°C</span>
+                      {/* Active zone badge */}
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full">
+                        <PrismCard glowColor={zone.color} className="px-3 py-1.5">
+                          <span className="text-xs whitespace-nowrap" style={{ color: zone.color }}>
+                            ← Active
+                          </span>
+                        </PrismCard>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </section>
+          );
+        })}
+
+        {/* ── 1000m — Abyssal — Feature Grid ── */}
+        <section className="relative py-28 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020c22] to-[#020917]" />
+          <div className="absolute inset-0"
+            style={{ backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% 90%, rgba(124,58,237,0.14), transparent)' }} />
+
+          <div className="relative z-10 max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm mb-6"
+                style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
+                <Anchor size={13} />
+                1000 m · Abyssal Zone · Deepest level monitored
+              </div>
+              <h2 className="text-4xl font-black text-white mb-4">Platform Modules</h2>
+              <p className="text-white/40 max-w-xl mx-auto">
+                From surface satellites to 1000 m deep — every tool you need for North Indian Ocean intelligence
+              </p>
             </div>
-          </section>
-        );
-      })}
 
-      {/* ── ABYSSAL — 1000m — features grid ── */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020c22] to-[#020917]" />
-        <div className="absolute inset-0"
-          style={{ backgroundImage:'radial-gradient(ellipse 60% 40% at 50% 80%, rgba(124,58,237,0.12), transparent)' }} />
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-purple-500/30 text-purple-400 text-sm mb-6">
-              <Anchor size={13} />
-              1000 m · Abyssal Zone · Deepest level monitored
+            {/* Module cards — prism style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[
+                { icon: LayoutDashboard, label: 'Dashboard',       desc: 'Live OHC, MLD, subsurface profile snapshot', to: '/dashboard', glow: '#06b6d4' },
+                { icon: Calendar,        label: '7-Day Forecast',  desc: 'Sliding window temp prediction at 15 depths', to: '/forecast',  glow: '#3b82f6' },
+                { icon: GitCompare,      label: 'Model vs GLORYS', desc: 'DL model accuracy vs GLORYS12 reanalysis',    to: '/compare',   glow: '#8b5cf6' },
+                { icon: BarChart2,       label: 'Input Data',      desc: 'Upload .nc satellite files',                  to: '/input',     glow: '#f97316' },
+                { icon: Layers,          label: '3D Profile',      desc: 'Interactive 3D depth-level slab view',        to: '/map',       glow: '#14b8a6' },
+                { icon: Wind,            label: 'Cyclone Pred.',   desc: 'Physics-based cyclone risk from OHC + SST',   to: '/cyclone',   glow: '#ef4444' },
+                { icon: Eye,             label: 'Surface Obs',     desc: 'SST · SSS · SSH · Wind heatmaps',             to: '/surface',   glow: '#10b981' },
+                { icon: Database,        label: 'Validation',      desc: 'ARGO-based per-depth RMSE · Bias · R²',       to: '/validation',glow: '#eab308' },
+                { icon: MessageSquare,   label: 'X AI',            desc: 'Natural language Q&A over ocean data',        to: '/chat',      glow: '#a78bfa' },
+              ].map(({ icon: Icon, label, desc, to, glow }) => (
+                <button key={to} onClick={() => navigate(to)}
+                  className="text-left group hover:scale-[1.03] hover:-translate-y-1 transition-all duration-200">
+                  <PrismCard glowColor={glow} className="p-5 h-full">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+                      style={{ background: glow + '20', border: `1px solid ${glow}40` }}>
+                      <Icon size={18} style={{ color: glow }} />
+                    </div>
+                    <h3 className="font-semibold mb-1" style={{ color: glow }}>{label}</h3>
+                    <p className="text-white/45 text-sm leading-relaxed">{desc}</p>
+                    <div className="flex items-center gap-1 mt-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: glow }}>
+                      Open <ArrowRight size={11} />
+                    </div>
+                  </PrismCard>
+                </button>
+              ))}
             </div>
-            <h2 className="text-4xl font-black text-white mb-4">Platform Modules</h2>
-            <p className="text-white/40 max-w-xl mx-auto">
-              From surface satellites to 1000m deep — every tool you need for North Indian Ocean intelligence
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: LayoutDashboard, label:'Dashboard',       desc:'Live metrics, OHC, MLD, subsurface profile snapshot',    to:'/dashboard', color:'cyan' },
-              { icon: Calendar,        label:'7-Day Forecast',  desc:'Sliding window temperature prediction at 15 depth levels', to:'/forecast',  color:'blue' },
-              { icon: GitCompare,      label:'Model vs GLORYS', desc:'DL model accuracy vs GLORYS12 reanalysis data',           to:'/compare',   color:'purple' },
-              { icon: BarChart2,       label:'Input Data',      desc:'Upload .nc satellite files for reconstruction',           to:'/input',     color:'orange' },
-              { icon: Layers,          label:'3D Profile',      desc:'Interactive 3D depth-level slab visualisation',           to:'/map',       color:'teal' },
-              { icon: Wind,            label:'Cyclone Pred.',   desc:'Physics-based cyclone risk from OHC and SST',             to:'/cyclone',   color:'red' },
-              { icon: Eye,             label:'Surface Obs',     desc:'SST · SSS · SSH · Wind heatmaps',                        to:'/surface',   color:'green' },
-              { icon: Database,        label:'Validation',      desc:'ARGO-based per-depth RMSE · Bias · R²',                  to:'/validation',color:'yellow' },
-              { icon: MessageSquare,   label:'X AI',            desc:'Natural language Q&A over live ocean data',              to:'/chat',      color:'violet' },
-            ].map(({ icon: Icon, label, desc, to, color }) => (
-              <button key={to} onClick={() => navigate(to)}
-                className={`text-left glass rounded-2xl p-5 border border-${color}-500/20 bg-gradient-to-br from-${color}-500/8 to-transparent hover:scale-[1.02] hover:-translate-y-1 transition-all duration-200 group depth-shadow`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-${color}-400 bg-white/5 border border-${color}-500/20 mb-4 group-hover:scale-110 transition-transform`}>
-                  <Icon size={18} />
-                </div>
-                <h3 className={`font-semibold text-${color}-400 mb-1`}>{label}</h3>
-                <p className="text-white/45 text-sm leading-relaxed">{desc}</p>
-                <div className={`flex items-center gap-1 mt-3 text-xs text-${color}-400 opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  Open <ArrowRight size={11} />
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Footer depth readout */}
-          <div className="text-center mt-20 space-y-3">
-            <div className="inline-flex items-center gap-2 text-white/20 text-xs">
-              <Waves size={12} />
-              You've reached 1000m · North Indian Ocean · 5°N–30°N, 45°E–105°E
+            {/* Footer */}
+            <div className="text-center mt-20 space-y-3">
+              <div className="inline-flex items-center gap-2 text-white/20 text-xs">
+                <Waves size={12} />
+                You've reached 1000 m · North Indian Ocean · 5°N–30°N, 45°E–105°E
+              </div>
+              <div className="w-px h-12 bg-gradient-to-b from-purple-500/30 to-transparent mx-auto" />
             </div>
-            <div className="w-px h-12 bg-gradient-to-b from-purple-500/30 to-transparent mx-auto" />
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
