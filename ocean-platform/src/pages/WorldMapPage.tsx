@@ -137,17 +137,17 @@ export default function WorldMapPage() {
     const style = document.createElement('style');
     style.id = 'leaflet-dark-override';
     style.textContent = `
-      .leaflet-container { background: #020917 !important; cursor: crosshair !important; }
-      .leaflet-control-zoom a { background: rgba(2,9,23,0.85) !important; color: #06b6d4 !important; border-color: rgba(6,182,212,0.3) !important; }
-      .leaflet-control-zoom a:hover { background: rgba(6,182,212,0.15) !important; }
-      .leaflet-control-attribution { background: rgba(2,9,23,0.7) !important; color: rgba(255,255,255,0.3) !important; font-size: 10px; }
-      .leaflet-control-attribution a { color: rgba(6,182,212,0.6) !important; }
-      .leaflet-popup-content-wrapper { background: rgba(2,9,23,0.92) !important; border: 1px solid rgba(255,255,255,0.15) !important; border-radius: 12px !important; backdrop-filter: blur(16px); color: white !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; }
-      .leaflet-popup-tip { background: rgba(2,9,23,0.92) !important; }
-      .leaflet-popup-close-button { color: rgba(255,255,255,0.5) !important; }
+      .leaflet-container { background: #0a3d62 !important; cursor: crosshair !important; }
+      .leaflet-control-zoom a { background: rgba(255,255,255,0.92) !important; color: #0a3d62 !important; border-color: rgba(255,255,255,0.4) !important; font-weight: bold; }
+      .leaflet-control-zoom a:hover { background: rgba(255,255,255,1) !important; color: #06b6d4 !important; }
+      .leaflet-control-attribution { background: rgba(0,0,0,0.55) !important; color: rgba(255,255,255,0.6) !important; font-size: 10px; }
+      .leaflet-control-attribution a { color: rgba(100,220,255,0.8) !important; }
+      .leaflet-popup-content-wrapper { background: rgba(2,9,23,0.93) !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 14px !important; backdrop-filter: blur(20px); color: white !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
+      .leaflet-popup-tip { background: rgba(2,9,23,0.93) !important; }
+      .leaflet-popup-close-button { color: rgba(255,255,255,0.6) !important; font-size: 16px !important; top: 8px !important; right: 10px !important; }
       .leaflet-popup-close-button:hover { color: white !important; }
-      .leaflet-tooltip { background: rgba(2,9,23,0.88) !important; border: 1px solid rgba(6,182,212,0.3) !important; color: white !important; border-radius: 8px !important; font-size: 11px; }
-      .leaflet-tooltip::before { border-top-color: rgba(6,182,212,0.3) !important; }
+      .leaflet-tooltip { background: rgba(2,9,23,0.9) !important; border: 1px solid rgba(6,182,212,0.4) !important; color: white !important; border-radius: 8px !important; font-size: 11px; backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+      .leaflet-tooltip::before { border-top-color: rgba(6,182,212,0.4) !important; }
     `;
     document.head.appendChild(style);
     return () => { document.getElementById('leaflet-dark-override')?.remove(); };
@@ -193,22 +193,29 @@ export default function WorldMapPage() {
                   scrollWheelZoom
                   doubleClickZoom={false}
                 >
-                  {/* Dark oceanic tile layer */}
+                  {/* Colorful terrain/satellite tile layer */}
                   <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a> &copy; DigitalGlobe, GeoEye, Earthstar Geographics'
                     maxZoom={18}
+                  />
+                  {/* Street/label overlay on top of satellite */}
+                  <TileLayer
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                    attribution=""
+                    maxZoom={18}
+                    opacity={0.7}
                   />
 
                   {/* NIO study domain rectangle */}
                   <Rectangle
                     bounds={NIO_BOUNDS}
                     pathOptions={{
-                      color: '#06b6d4',
-                      weight: 2,
-                      dashArray: '6 4',
-                      fillColor: '#06b6d4',
-                      fillOpacity: 0.05,
+                      color: '#facc15',
+                      weight: 3,
+                      dashArray: '8 5',
+                      fillColor: '#facc15',
+                      fillOpacity: 0.07,
                     }}
                   >
                     <LeafletTooltip sticky={false} direction="top">
@@ -221,12 +228,12 @@ export default function WorldMapPage() {
                     <CircleMarker
                       key={r.id}
                       center={[r.lat, r.lon]}
-                      radius={6}
+                      radius={8}
                       pathOptions={{
-                        color: '#06b6d4',
+                        color: '#ffffff',
                         fillColor: '#06b6d4',
-                        fillOpacity: 0.7,
-                        weight: 1.5,
+                        fillOpacity: 0.9,
+                        weight: 2,
                       }}
                     >
                       <LeafletTooltip>
@@ -247,12 +254,12 @@ export default function WorldMapPage() {
                     <CircleMarker
                       key={p.name}
                       center={[p.lat, p.lon]}
-                      radius={5}
+                      radius={7}
                       pathOptions={{
-                        color: '#fbbf24',
-                        fillColor: '#fbbf24',
-                        fillOpacity: 0.5,
-                        weight: 1,
+                        color: '#ffffff',
+                        fillColor: '#f97316',
+                        fillOpacity: 0.9,
+                        weight: 2,
                       }}
                       eventHandlers={{
                         click: () => handleMapClick(p.lat, p.lon),
@@ -305,15 +312,15 @@ export default function WorldMapPage() {
               {/* Map legend */}
               <div className="flex flex-wrap items-center gap-5 px-4 py-3 border-t border-white/8 text-xs text-white/50">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 border-dashed border border-cyan-400/60 inline-block" />
+                  <span className="w-3 h-0.5 border-dashed border-2 border-yellow-400 inline-block" />
                   NIO Study Domain
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400/70 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-white inline-block" />
                   Data station (hover for obs)
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/60 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-400 border-2 border-white inline-block" />
                   Preset location (click to select)
                 </span>
                 {pin && (
