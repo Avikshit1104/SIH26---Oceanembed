@@ -398,8 +398,8 @@ export default function SurfacePage() {
                   {([
                     { label:'SST',    v:`${clickedPoint.sst.toFixed(3)}°C`,    c:'text-red-400',    icon: Thermometer },
                     { label:'SSS',    v:`${clickedPoint.sss.toFixed(3)} PSU`,  c:'text-blue-400',   icon: Droplets },
-                    { label:'SSH',    v:`${clickedPoint.ssh.toFixed(3)} cm`,   c:'text-cyan-400',   icon: Waves },
-                    { label:'SLA',    v:`${clickedPoint.sla.toFixed(3)} cm`,   c:'text-teal-400',   icon: Waves },
+                    { label:'SSH MIN',    v:`${clickedPoint.ssh.toFixed(3)} cm`,   c:'text-cyan-400',   icon: Waves },
+                    { label:'SSH MAX',    v:`${clickedPoint.sla.toFixed(3)} cm`,   c:'text-teal-400',   icon: Waves },
                     { label:'U-Wind', v:`${clickedPoint.uwind.toFixed(3)} m/s`, c:'text-green-400', icon: Wind },
                     { label:'V-Wind', v:`${clickedPoint.vwind.toFixed(3)} m/s`, c:'text-green-400', icon: Wind },
                   ] as { label: string; v: string; c: string; icon: any }[]).map(({ label, v, c, icon: Icon }) => (
@@ -429,8 +429,8 @@ export default function SurfacePage() {
                     {([
                       { label:'SST',    v:`${selectedRecord.inputs.sst.toFixed(2)}°C`,    c:'text-red-400' },
                       { label:'SSS',    v:`${selectedRecord.inputs.sss.toFixed(2)} PSU`,  c:'text-blue-400' },
-                      { label:'SSH',    v:`${selectedRecord.inputs.ssh.toFixed(2)} cm`,   c:'text-cyan-400' },
-                      { label:'SLA',    v:`${selectedRecord.inputs.sla.toFixed(2)} cm`,   c:'text-teal-400' },
+                      { label:'SSH MAX',    v:`${selectedRecord.inputs.ssh.toFixed(2)} cm`,   c:'text-cyan-400' },
+                      { label:'SSH MIN',    v:`${selectedRecord.inputs.sla.toFixed(2)} cm`,   c:'text-teal-400' },
                       { label:'U-Wind', v:`${selectedRecord.inputs.uwind.toFixed(2)} m/s`, c:'text-green-400' },
                       { label:'V-Wind', v:`${selectedRecord.inputs.vwind.toFixed(2)} m/s`, c:'text-green-400' },
                     ] as {label:string;v:string;c:string}[]).map(({ label, v, c }) => (

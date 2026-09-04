@@ -563,7 +563,7 @@ export default function InputPage() {
               ) : !allReady ? (
                 <>
                   <Upload size={16} />
-                  Upload required files to continue ({readySlots.length}/{requiredSlots.length} of 6 ready)
+                  Upload required files to continue ({readySlots.length}/{requiredSlots.length} ready)
                 </>
               ) : (
                 <>
