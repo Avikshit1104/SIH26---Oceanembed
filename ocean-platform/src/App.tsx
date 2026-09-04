@@ -9,16 +9,18 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 
 // Lazy loaded pages
-const ChatPage        = lazy(() => import('./pages/ChatPage'));
-const InputPage       = lazy(() => import('./pages/InputPage'));
-const WorldMapPage    = lazy(() => import('./pages/WorldMapPage'));
-const DashboardPage   = lazy(() => import('./pages/DashboardPage'));
-const MapPage         = lazy(() => import('./pages/MapPage'));
-const CyclonePage     = lazy(() => import('./pages/CyclonePage'));
-const SurfacePage     = lazy(() => import('./pages/SurfacePage'));
-const DocsPage        = lazy(() => import('./pages/DocsPage'));
-const GovPortalPage   = lazy(() => import('./pages/GovPortalPage'));
-const ValidationPage  = lazy(() => import('./pages/ValidationPage'));
+const ChatPage            = lazy(() => import('./pages/ChatPage'));
+const InputPage           = lazy(() => import('./pages/InputPage'));
+const WorldMapPage        = lazy(() => import('./pages/WorldMapPage'));
+const DashboardPage       = lazy(() => import('./pages/DashboardPage'));
+const MapPage             = lazy(() => import('./pages/MapPage'));
+const CyclonePage         = lazy(() => import('./pages/CyclonePage'));
+const SurfacePage         = lazy(() => import('./pages/SurfacePage'));
+const DocsPage            = lazy(() => import('./pages/DocsPage'));
+const GovPortalPage       = lazy(() => import('./pages/GovPortalPage'));
+const ValidationPage      = lazy(() => import('./pages/ValidationPage'));
+const ForecastPage        = lazy(() => import('./pages/ForecastPage'));
+const ModelComparisonPage = lazy(() => import('./pages/ModelComparisonPage'));
 
 function PageLoader() {
   return (
@@ -56,6 +58,8 @@ export default function App() {
                 </ProtectedRoute>
               } />
               <Route path="/validation" element={<ValidationPage />} />
+              <Route path="/forecast"  element={<ForecastPage />} />
+              <Route path="/compare"   element={<ModelComparisonPage />} />
             </Routes>
           </Suspense>
         </DataProvider>

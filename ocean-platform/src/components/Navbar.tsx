@@ -4,6 +4,7 @@ import {
   Waves, MessageSquare, LayoutDashboard, Globe, Wind,
   Thermometer, FileText, Shield, BarChart2, LogOut,
   Menu, X, ChevronDown, User, CheckSquare, Map,
+  Calendar, GitCompare,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -16,7 +17,9 @@ const NAV_ITEMS = [
   { to: '/worldmap',  label: 'Map',          icon: Map },
   { to: '/surface',   label: 'Surface Obs',  icon: Thermometer },
   { to: '/map',       label: '3D Profile',   icon: Globe },
+  { to: '/forecast',  label: 'Forecast',     icon: Calendar },
   { to: '/cyclone',   label: 'Cyclone',      icon: Wind },
+  { to: '/compare',   label: 'Compare',      icon: GitCompare },
   { to: '/validation',label: 'Validation',   icon: CheckSquare },
   { to: '/docs',      label: 'Docs',         icon: FileText, requiresAuth: true },
   { to: '/gov',       label: 'Gov Portal',   icon: Shield,   requiresGov: true },
