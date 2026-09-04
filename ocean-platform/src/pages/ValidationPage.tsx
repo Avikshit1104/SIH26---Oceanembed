@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react';
 import {
   BarChart2, CheckCircle, XCircle,
-  TrendingUp, Target, Calendar, Eye, Layers,
+  TrendingUp, Target, Calendar, Layers,
 } from 'lucide-react';
 import {
-  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, ReferenceLine,
-} from 'recharts';
-import { format, parseISO } from 'date-fns';
+  XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, LineChart, Line,
+} from 'recharts';import { format, parseISO } from 'date-fns';
 import PageLayout, { SectionHeader } from '../components/PageLayout';
 import { useData } from '../contexts/DataContext';
 
@@ -119,18 +118,14 @@ export default function ValidationPage() {
   }, [records, dateIdx, mode]);
 
   // Flatten for stats
-  const predFlat = predicted.flat();
-  const actFlat  = actual.flat();
   const diffFlat = diff.flat();
+  const actFlat  = actual.flat();   // still needed for R² denominator
 
   const mae  = diffFlat.reduce((s, v) => s + Math.abs(v), 0) / diffFlat.length;
   const rmse = Math.sqrt(diffFlat.reduce((s, v) => s + v * v, 0) / diffFlat.length);
   const bias = diffFlat.reduce((s, v) => s + v, 0) / diffFlat.length;
   const r2   = 1 - diffFlat.reduce((s, v) => s + v * v, 0) /
                actFlat.reduce((s, v) => s + (v - actFlat.reduce((a, b) => a + b, 0) / actFlat.length) ** 2, 0);
-
-  // Scatter data for predicted vs actual
-  const scatterData = predFlat.slice(0, 80).map((p, i) => ({ pred: p, actual: actFlat[i] }));
 
   // Timeline comparison (last 7 records) — uses inputs.sst
   const timelineData = records.slice(-7).map(r => {
@@ -244,8 +239,8 @@ export default function ValidationPage() {
           )}
         </div>
 
-        {/* Stats + charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Stats + charts — 2 columns: metrics | timeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Error metrics */}
           <div className="glass rounded-2xl p-5 border border-white/10 space-y-4">
             <h3 className="font-semibold text-white flex items-center gap-2">
@@ -282,46 +277,26 @@ export default function ValidationPage() {
             </div>
           </div>
 
-          {/* Predicted vs Actual scatter */}
-          <div className="glass rounded-2xl p-5 border border-white/10">
-            <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
-              <Eye size={14} className="text-cyan-400" />
-              Predicted vs Actual
-            </h3>
-            <p className="text-xs text-white/40 mb-3">Each point = one grid cell</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <ScatterChart>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="pred" name="Predicted" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: 'Predicted', fill: 'rgba(255,255,255,0.3)', fontSize: 10, position: 'insideBottom', offset: -2 }} />
-                <YAxis dataKey="actual" name="Actual"    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: 'Actual', fill: 'rgba(255,255,255,0.3)', fontSize: 10, angle: -90, position: 'insideLeft' }} width={35} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<CustomTooltip />} />
-                <Scatter data={scatterData} fill="#06b6d4" fillOpacity={0.5} />
-                {/* Perfect fit line */}
-                <ReferenceLine segment={[{ x: 22, y: 22 }, { x: 32, y: 32 }]} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 3" />
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-
           {/* Timeline error */}
           <div className="glass rounded-2xl p-5 border border-white/10">
             <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
               <TrendingUp size={14} className="text-cyan-400" />
               7-Day Timeline
             </h3>
-            <p className="text-xs text-white/40 mb-3">Predicted vs observed SST</p>
-            <ResponsiveContainer width="100%" height={200}>
+            <p className="text-xs text-white/40 mb-3">Predicted vs observed SST over last 7 records</p>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={timelineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="Predicted" stroke="#06b6d4" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="Actual"    stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="4 3" />
+                <Line type="monotone" dataKey="Predicted" stroke="#06b6d4" strokeWidth={2.5} dot={{ fill:'#06b6d4', r:3 }} name="Predicted (°C)" />
+                <Line type="monotone" dataKey="Actual"    stroke="#10b981" strokeWidth={2.5} dot={{ fill:'#10b981', r:3 }} strokeDasharray="5 3" name="Observed (°C)" />
               </LineChart>
             </ResponsiveContainer>
             <div className="flex gap-4 mt-2 text-xs text-white/40">
               <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-cyan-400 inline-block" /> Predicted</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-green-400 inline-block border-dashed" /> Observed</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-green-400 inline-block" style={{ borderBottom:'2px dashed' }} /> Observed</span>
             </div>
           </div>
         </div>
